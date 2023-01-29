@@ -19,5 +19,17 @@ EXIT;
 ### Perl prerequisities
 ```bash
 brew install openssl mysql-connector-c
-sudo cpan install DBD::MariaDB
+cpan install DBD::MariaDB
+cpan install Mojo::mysql
+#cpan install Mojolicious::Plugin::Database
+cpan install Mojolicious::Plugin::OpenAPI
+cpan install Function::Parameters
+cpan install Text::CSV_XS
 ```
+
+### DB Schema
+Created or updated with `bin/cdrstore.pl deploy`
+
+For the sake of the example, let's create simple tables which will just
+demonstrate a possible DB model, following a simple rule - if there are
+repeated records, store them in related table.
