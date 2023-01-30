@@ -24,8 +24,10 @@ method startup() {
 
 	$self->helper('cdrstore' => sub {
 		my ($c) = @_;
+		my $config = $c->app->config;
 		return CdrStoreApp::Model::CdrStore->new(
 			mariadb => $self->mariadb,
+			columns => $config->{columns},
 		);
 	});
 
@@ -87,15 +89,15 @@ DROP TABLE IF EXISTS customers;
 -- 2 up
 CREATE TABLE IF NOT EXISTS invalid_call_records (
 	id int(10) unsigned NOT NULL AUTO_INCREMENT,
-	reference char(33) NOT NULL,
-	caller_id int(10) unsigned NOT NULL,
-	recipient_id int(10) unsigned NOT NULL,
+	reference char(33) DEFAULT NULL,
+	caller_id decimal(15,0) unsigned DEFAULT NULL,
+	recipient_id decimal(15,0) unsigned DEFAULT NULL,
 	call_date date DEFAULT NULL,
 	end_time time DEFAULT NULL,
-	duration mediumint(8) unsigned DEFAULT 0,
+	duration mediumint(8) unsigned DEFAULT NULL,
 	cost decimal(6,3) DEFAULT NULL,
 	currency char(3) DEFAULT NULL,
-	type smallint(1) DEFAULT NULL CHECK (type in (1,2)),
+	type smallint(1) DEFAULT NULL,
 	PRIMARY KEY (id)
 );
 

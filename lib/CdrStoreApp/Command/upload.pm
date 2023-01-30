@@ -21,7 +21,7 @@ $0 upload filename
 }
 
 method _build_batch_size () {
-	my $batch_size = $self->app->config->batch_size;
+	my $batch_size = $self->app->config->{batch_size};
 	return defined $batch_size ? $batch_size : 500;
 }
 
@@ -32,11 +32,39 @@ method run ($filename) {
 
 	$csv->column_names( $csv->getline($fh) );
 
+	my @records;
 	while (my $row = $csv->getline_hr($fh)) {
-		# TODO: Contruct a batch and insert it in transaction
+
+		# munge date
+		$row->{call_date} = $row->{call_date} =~ s|(\d{2})/(\d{2})/(\d{4})|$3/$2/$1|r;
+		# munge recipient to recipient_id
+		$row->{recipient_id} = delete $row->{recipient};
+		$row->{is_valid} = is_row_valid($row);
+
+		push @records, $row;
+
+		if (scalar @records % $self->batch_size == 0) {
+			$self->app->cdrstore->insert_cdr_records(\@records);
+			@records = ();
+		}
 	}
+
+	# Insert the rest
+	$self->app->cdrstore->insert_cdr_records(\@records) if scalar @records;
 
 	return 1;
 }
 
+fun is_row_valid ($row) {
+	my $is_valid = 1;
+	foreach my $key (keys %$row) {
+		if ($row->{$key} eq '') {
+			delete $row->{$key};
+			$is_valid = 0;
+		}
+	}
+	return $is_valid;
+}
+
+__PACKAGE__->meta()->make_immutable();
 1;
