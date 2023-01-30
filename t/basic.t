@@ -16,10 +16,18 @@ subtest 'Test deploy command and initialize DB' => sub {
 	ok( $t->app->commands->run('deploy', '-r') eq 1, 'reset db ok' );
 
 	# Insert some row to test the version upgrade does not delete the entries
-	$t->mariadb->query('INSERT INTO customers (MSISDN) VALUES (?)', 420123456789);
+	# TODO: Move these queries to DAO
+	my $msisdn = 420123456789;
+	my $db = $t->app->mariadb->db;
+	$db->query('INSERT INTO customers (MSISDN) VALUES (?)', $msisdn);
 
-	$t->mariadb->query('select * from customers')
-		->hashes->map(sub { $_->{MSISDN} })->join("\n")->say;
+	lives_ok { $db->query('INSERT IGNORE INTO customers (MSISDN) VALUES (?)', $msisdn) } 'insert ignore on duplicate does not fail';
+
+	ok( $t->app->commands->run('deploy', '-v', 2) eq 1, 'upgrade to version 2 ok' );
+
+	my $msisdn = $db->query('select * from customers')
+		->hashes->map(sub { $_->{MSISDN} })->join("\n");
+	ok( $msisdn eq 420123456789, 'select returns expected msisidn');
 };
 
 subtest 'Test CSV upload' => sub {

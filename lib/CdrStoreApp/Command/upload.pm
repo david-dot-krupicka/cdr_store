@@ -33,7 +33,7 @@ method run ($filename) {
 	$csv->column_names( $csv->getline($fh) );
 
 	while (my $row = $csv->getline_hr($fh)) {
-		say Dumper $row;
+		# TODO: Contruct a batch and insert it in transaction
 	}
 
 	return 1;

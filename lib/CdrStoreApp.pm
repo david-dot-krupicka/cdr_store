@@ -53,7 +53,7 @@ __DATA__
 
 CREATE TABLE IF NOT EXISTS customers (
 	id int(10) unsigned NOT NULL AUTO_INCREMENT,
-	MSISDN decimal(15,0) NOT NULL,
+	MSISDN decimal(15,0) NOT NULL UNIQUE,
 	PRIMARY KEY(id)
 );
 CREATE TABLE IF NOT EXISTS recipients (
@@ -83,3 +83,22 @@ CREATE TABLE IF NOT EXISTS call_records (
 DROP TABLE IF EXISTS call_records;
 DROP TABLE IF EXISTS recipients;
 DROP TABLE IF EXISTS customers;
+
+-- 2 up
+CREATE TABLE IF NOT EXISTS invalid_call_records (
+	id int(10) unsigned NOT NULL AUTO_INCREMENT,
+	reference char(33) NOT NULL,
+	caller_id int(10) unsigned NOT NULL,
+	recipient_id int(10) unsigned NOT NULL,
+	call_date date DEFAULT NULL,
+	end_time time DEFAULT NULL,
+	duration mediumint(8) unsigned DEFAULT 0,
+	cost decimal(6,3) DEFAULT NULL,
+	currency char(3) DEFAULT NULL,
+	type smallint(1) DEFAULT NULL CHECK (type in (1,2)),
+	PRIMARY KEY (id)
+);
+
+-- 2 down
+
+DROP TABLE IF EXISTS invalid_call_records;
