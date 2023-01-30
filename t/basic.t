@@ -13,7 +13,6 @@ my $t = Test::Mojo->new(
 	{
 		mariadb    => 'mariadb://cdr_store_test:cdr_store_test_pass@127.0.0.1:3307/test',
 		batch_size => 3,
-		columns => [ qw(caller_id recipient_id call_date end_time duration cost reference currency type) ],
 	}
 );
 
@@ -74,7 +73,7 @@ subtest 'Test CSV upload' => sub {
 			'currency' => 'GBP',
 			'reference' => 'C2069DB0D6B16E3BCBDDE80CA9FF96E3A',
 			'recipient' => '447909000000',
-			'end_time' => '16:30:01'
+			'end_time' => '16:30:01',
 		},
 		{
 			'call_date' => '16/08/2016',
@@ -85,7 +84,7 @@ subtest 'Test CSV upload' => sub {
 			'reference' => 'C50B5A7BDB8D68B8512BB14A9D363CAA1',
 			'currency' => 'GBP',
 			'end_time' => '14:00:47',
-			'called_id' => '442036000000'
+			'called_id' => '442036000000',
 		},
 		{
 			'reference' => 'C5DA9724701EEBBA95CA2CC5617BA93E4',
@@ -96,7 +95,7 @@ subtest 'Test CSV upload' => sub {
 			'call_date' => '16/08/2016',
 			'type' => 2,
 			'duration' => 43,
-			'cost' => '0.000'
+			'cost' => '0.000',
 		},
 		{
 			'call_date' => '16/08/2016',
@@ -107,7 +106,7 @@ subtest 'Test CSV upload' => sub {
 			'currency' => 'GBP',
 			'reference' => 'C639033F0752A937D951A6A2E33EB6910',
 			'end_time' => '14:32:40',
-			'called_id' => '441827000000'
+			'called_id' => '441827000000',
 		},
 		{
 			'duration' => 149,
@@ -118,25 +117,23 @@ subtest 'Test CSV upload' => sub {
 			'end_time' => '14:05:29',
 			'reference' => 'C6C4EC9A8C4847E8AD1B1D6CD02491E79',
 			'currency' => 'GBP',
-			'recipient' => '448088000000'
-		}
+			'recipient' => '448088000000',
+		},
 	);
 	is_deeply($calls_result, $expected_records, 'valid records uploaded');
 
 	my $invalid_calls_result = $t->app->cdrstore->select_all_from_table('invalid_call_records');
 	isa_ok($invalid_calls_result, $class);
-	my $expected_invalid_records = $class->new({
-		call_date => '2016-08-16',	# TODO: transform the date in the actual output (but for test it's ok)
-		caller_id => undef,
-		cost => '0.000',
-		currency => 'GBP',
-		duration => 31,
-		end_time => '14:21:50',
-		id => 1,
-		recipient_id => '448001000000',
-		reference => 'C0FAAB1E6424B20D1625FEAAD5936053E',
-		type => 1,
-	});
+	my $expected_invalid_records = $class->new(
+		{
+			id     => 1,
+			record => ',448001000000,16/08/2016,14:21:50,31,0,C0FAAB1E6424B20D1625FEAAD5936053E,GBP,1',
+		},
+		{
+			id     => 2,
+			record => '442036000000,448088000000,16/08/2016,14:05:29,iAmString,0,C6C4EC9A8C4847E8AD1B1D6CD02491E79,GBP,2',
+		},
+	);
 	is_deeply($invalid_calls_result, $expected_invalid_records, 'invalid records uploaded');
 
 	# TODO: test how many records do we actually have in customers and recipients tables

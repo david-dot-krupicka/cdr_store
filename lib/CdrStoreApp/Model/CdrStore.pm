@@ -13,22 +13,6 @@ use feature 'say';
 #has mariadb => sub { croak "mariadb is required" };
 has mariadb => (is => 'ro', isa => 'Mojo::mysql', required => 1);
 
-method test ($search) {
-	$self->mariadb->db->query(<<'	SQL', $search)->hashes;
-		SELECT * FROM customers
-		WHERE id=?
-	SQL
-}
-
-method insert_msisdn_into_table ($msisdn, $table) {
-	my $id = $self->mariadb->db->query(
-		"INSERT IGNORE INTO $table (MSISDN) VALUES (?)", $msisdn
-	)->last_insert_id;
-	$id = $self->mariadb->db->select(
-		$table, undef, {MSISDN => $msisdn})->hash->{id} if $id == 0;
-	return $id;
-}
-
 method insert_cdr_records ($columns, $records) {
 	my $class = 'CdrStoreApp::Model::CdrStore::CdrRecord';
 	eval {
@@ -45,7 +29,7 @@ method insert_cdr_records ($columns, $records) {
 					db => $db,
 					%cdr_record_hash
 				);
-				$cdr_record->print_record();
+				$cdr_record->insert_record();
 			} catch {
 				# If any exception occurs, store the record as invalid
 				my $action_message = 'inserting into invalid_call_records';
@@ -64,20 +48,6 @@ method insert_cdr_records ($columns, $records) {
 					{ record => join(',', @$record) }
 				);
 			};
-
-			#if (delete $record->{is_valid}) {
-			#	# Returns customer id
-			#	$record->{caller_id} = $self->insert_msisdn_into_table(
-			#		delete $record->{caller_id}, 'customers'
-			#	);
-			#	# Returns recipient id
-			#	$record->{recipient_id} = $self->insert_msisdn_into_table(
-			#		delete $record->{recipient_id}, 'recipients'
-			#	);
-			#	$self->mariadb->db->insert('call_records', $record);
-			#} else {
-			#	$self->mariadb->db->insert('invalid_call_records', $record);
-			#}
 		}
 		$tx->commit;
 	};
@@ -98,13 +68,14 @@ method select_all_records () {
 		"type",
 	);
 	my $stmt = <<"	SQL";
-SELECT %s FROM call_records crd
-JOIN customers c on crd.caller_id = c.id
-JOIN recipients r on crd.recipient_id = r.id
+SELECT %s FROM call_records cdr
+JOIN customers c on cdr.caller_id = c.id
+JOIN recipients r on cdr.recipient = r.id
 	SQL
 	return $self->mariadb->db->query(sprintf($stmt, join(',', @columns)))->hashes;
 }
 
+# TODO: Get rid of this too ---------------
 # Mainly used in testing
 method select_all_from_table ($table) {
 	return $self->mariadb->db->query("SELECT * FROM $table")->hashes;
@@ -114,6 +85,24 @@ method delete_all_from_table ($table) {
 	$self->mariadb->db->delete($table);
 	return 1;
 }
+
+# TODO: Get rid of this --------------------
+method test ($search) {
+	$self->mariadb->db->query(<<'	SQL', $search)->hashes;
+SELECT * FROM customers
+WHERE id=?
+	SQL
+}
+
+method insert_msisdn_into_table ($msisdn, $table) {
+	my $id = $self->mariadb->db->query(
+		"INSERT IGNORE INTO $table (MSISDN) VALUES (?)", $msisdn
+	)->last_insert_id;
+	$id = $self->mariadb->db->select(
+		$table, undef, {MSISDN => $msisdn})->hash->{id} if $id == 0;
+	return $id;
+}
+# TODO --------------------------------------
 
 fun _delete_empty_fields ($record) {
 	map { delete $record->{$_} if $record->{$_} eq '' } keys %$record;

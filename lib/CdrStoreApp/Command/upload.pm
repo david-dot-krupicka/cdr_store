@@ -33,16 +33,9 @@ method run ($filename) {
 	my @columns = $csv->column_names( $csv->getline($fh) );
 
 	my @records;
-	my $user_message_template = 'Trying to insert %d to database...';
+	my $user_message_template = 'Trying to insert %d records to database...';
+
 	while (my $row = $csv->getline($fh)) {
-
-		# TODO: Do not munge here
-		## munge date
-		#$row->{call_date} = $row->{call_date} =~ s|(\d{2})/(\d{2})/(\d{4})|$3/$2/$1|r;
-		## munge recipient to recipient_id
-		#$row->{recipient_id} = delete $row->{recipient};
-		#$row->{is_valid} = is_row_valid($row);
-
 		push @records, $row;
 
 		if (scalar @records % $self->batch_size == 0) {
@@ -55,21 +48,10 @@ method run ($filename) {
 	# Insert the rest
 	if (scalar @records) {
 		say sprintf($user_message_template, scalar @records);
-		$self->app->cdrstore->insert_cdr_records(\@records);
+		$self->app->cdrstore->insert_cdr_records(\@columns, \@records);
 	}
 
 	return 1;
-}
-
-fun is_row_valid ($row) {
-	my $is_valid = 1;
-	foreach my $key (keys %$row) {
-		if ($row->{$key} eq '') {
-			delete $row->{$key};
-			$is_valid = 0;
-		}
-	}
-	return $is_valid;
 }
 
 __PACKAGE__->meta()->make_immutable();

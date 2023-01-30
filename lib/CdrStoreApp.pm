@@ -24,7 +24,6 @@ method startup() {
 		my $config = $c->app->config;
 		return CdrStoreApp::Model::CdrStore->new(
 			mariadb => $self->mariadb,
-			columns => $config->{columns},
 		);
 	});
 
@@ -63,7 +62,7 @@ CREATE TABLE IF NOT EXISTS recipients (
 CREATE TABLE IF NOT EXISTS call_records (
 	reference char(33) NOT NULL,
 	caller_id int(10) unsigned NOT NULL,
-	recipient_id int(10) unsigned NOT NULL,
+	recipient int(10) unsigned NOT NULL,
 	call_date date DEFAULT NULL,
 	end_time time DEFAULT NULL,
 	duration mediumint(8) unsigned DEFAULT 0,
@@ -72,9 +71,9 @@ CREATE TABLE IF NOT EXISTS call_records (
 	type smallint(1) DEFAULT NULL CHECK (type in (1,2)),
 	PRIMARY KEY (reference),
 	KEY fk_caller_id (caller_id),
-	KEY fk_recipient_id (recipient_id),
+	KEY fk_recipient (recipient),
 	CONSTRAINT fk_caller_id FOREIGN KEY (caller_id) REFERENCES customers (id),
-	CONSTRAINT fk_recipient_id FOREIGN KEY (recipient_id) REFERENCES recipients (id)
+	CONSTRAINT fk_recipient FOREIGN KEY (recipient) REFERENCES recipients (id)
 );
 
 -- 1 down
