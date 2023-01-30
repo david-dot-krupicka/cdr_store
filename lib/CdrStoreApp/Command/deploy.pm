@@ -8,7 +8,7 @@ use Exception::Class::Try::Catch;
 has 'description' => 'Deploy or update the CdrStoreApp schema';
 has 'usage' => <<"EOF";
 $0 deploy [-r|--reset] [-v|--version <version>]
-	-r, --reset\treset to the first version
+	-r, --reset\treset to the first version, DELETES ALL RECORDS!!!
 	-v, --version\tversion to deploy, defaults to the latest
 EOF
 
