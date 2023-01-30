@@ -1,0 +1,33 @@
+---
+# TODO: Keep login? Keep create user?
+# TODO: paths
+# TODO:   PUT /api/upload
+# TODO:   GET /api/fetch_cdr params: cdr reference
+# TODO:             output: CDR record
+# TODO:   GET /api/calls - params: time_range, up to 1 month, filter
+# TODO:             output: count of cdr's, total call duration
+# TODO:             filter: call type
+# TODO:   GET /api/calls/caller params: CallerId, time_range, up to 1 month, filter
+# TODO:             filter: call type
+# TODO:             output: CDR records
+# TODO:   GET /api/calls/caller/top params: CallerId, time_range again, filter
+# TODO:             filter: call type
+# TODO:             output: CDR records
+
+swagger: "2.0"
+info:
+    version: 1.0
+    title: CDR Store API
+basePath: "/api"
+tags:
+  - name: CDR
+    description: CDR Store to upload and analyze call data
+schemes:
+  - "http"
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+paths:
+    /test:
+      $ref: "requests/test.yaml#/test"

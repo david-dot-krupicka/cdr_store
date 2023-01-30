@@ -12,6 +12,9 @@ docker run -it --link mariadb:mysql --rm mariadb sh -c 'exec mysql -h"$MYSQL_POR
 CREATE DATABASE cdr_store;
 CREATE USER 'cdr_store_admin'@'172.17.0.1' IDENTIFIED BY 'cdr_store_pass';
 GRANT ALL ON cdr_store.* TO 'cdr_store_admin'@'172.17.0.1' IDENTIFIED BY 'cdr_store_pass' WITH GRANT OPTION;
+CREATE DATABASE test;
+CREATE USER 'cdr_store_test'@'172.17.0.1' IDENTIFIED BY 'cdr_store_test_pass';
+GRANT ALL ON test.* TO 'cdr_store_test'@'172.17.0.1' IDENTIFIED BY 'cdr_store_test_pass' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 EXIT;
 ```
@@ -21,10 +24,11 @@ EXIT;
 brew install openssl mysql-connector-c
 cpan install DBD::MariaDB
 cpan install Mojo::mysql
-#cpan install Mojolicious::Plugin::Database
 cpan install Mojolicious::Plugin::OpenAPI
 cpan install Function::Parameters
 cpan install Text::CSV_XS
+cpan install Exception::Class::Try::Catch
+cpan install Moose MooseX::NonMoose
 ```
 
 ### DB Schema
