@@ -8,7 +8,7 @@ use Exception::Class::Try::Catch;
 has 'description' => 'Deploy or update the CdrStoreApp schema';
 has 'usage' => <<"EOF";
 $0 deploy [-r|--reset] [-v|--version <version>]
-	-r, --reset\treset to the first version, DELETES ALL RECORDS!!!
+	-r, --reset\treset to the latest version, DELETES ALL RECORDS!!!
 	-v, --version\tversion to deploy, defaults to the latest
 EOF
 
@@ -26,7 +26,7 @@ method run (@args) {
 		}
 		elsif (defined $reset) {
 			$self->app->mariadb->migrations->migrate(0)->migrate;
-			say "Reset DB to version 1";
+			say "Reset to the latest DB version";
 		}
 		else {
 			$self->app->mariadb->migrations->migrate;

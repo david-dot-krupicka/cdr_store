@@ -17,22 +17,6 @@ my $t = Test::Mojo->new(
 	}
 );
 
-END {
-	my @drop_commands = (
-		'DROP TABLE call_records',
-		'DROP TABLE invalid_call_records',
-		'DROP TABLE recipients',
-		'DROP TABLE customers',
-		'DROP TABLE mojo_migrations',
-	);
-	foreach my $drop_command (@drop_commands) {
-		$t->app->cdrstore->mariadb->db->query($drop_command);
-	}
-
-	$t->app->cdrstore->mariadb->{dsn} =~ /dbi:MariaDB:dbname=([^;]+);/;
-	say "All created tables in DB $1 dropped";
-}
-
 subtest 'Required Perl modules' => sub {
 	my @modules = qw(
 		DBD::MariaDB

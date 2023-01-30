@@ -3,6 +3,7 @@
 ## Initial setup
 
 ### MariaDB in rancher
+<i>Note: PostgreSQL would be better choice, probably much faster</i>
 ```bash
 docker pull mariadb
 # set custom port to avoid clash with local mysql
