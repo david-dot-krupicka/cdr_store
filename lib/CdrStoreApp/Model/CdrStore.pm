@@ -38,8 +38,9 @@ method insert_cdr_records ($columns, $records) {
 				#if ($_->isa('Moose::Exception::AttributeIsRequired')) {
 				if ($_->message =~ /^Attribute \((\w+)\) is required/) {
 					say "ERROR: $class: $action_message, Attribute '$1' is required...";
-				} elsif ($_->message =~ /^Attribute \((\w+)\).*Validation failed for '(\w+)'/) {
-					say "ERROR: $class: $action_message, Validation of '$1' attribute failed, it is not $2...";
+					# Attribute (duration) does not pass the type constraint because: Validation failed for 'Int' with value IamString
+				} elsif ($_->message =~ /Attribute \((\w+)\).*Validation failed for '([^']+)' with value (\S+)/) {
+					say "ERROR: $class: $action_message, Validation of '$1' attribute failed, it is not $2, but $3...";
 				} else {
 					$_->rethrow();
 				}

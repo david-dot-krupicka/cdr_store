@@ -1,16 +1,11 @@
 package CdrStoreApp::Model::CdrStore::CdrRecord;
 use Moose;
-use Moose::Util::TypeConstraints;
+use CdrStoreApp::Model::CdrStore::CdrRecordTypes;
 use Function::Parameters;
 
 use feature 'say';
 
 # Implements only very basic type checking
-subtype 'RecordType'
-	=> as 'Int'
-	=> where { $_ =~ /^[12]$/ }
-	=> message { "Attribute (type): Validation failed for '1-2'"};
-
 has call_date => (is => 'ro', isa => 'Str', required => 1);
 has caller_id => (is => 'ro', isa => 'Int', required => 1);
 has cost => (is => 'ro', isa => 'Num', required => 1);
@@ -20,7 +15,7 @@ has duration => (is => 'ro', isa => 'Int', required => 1);
 has end_time => (is => 'ro', isa => 'Str', required => 1);
 has recipient => (is => 'ro', isa => 'Int', required => 1);
 has reference => (is => 'ro', isa => 'Str', required => 1);
-has type => (is => 'rw', isa => 'RecordType', required => 1);
+has type => (is => 'ro', isa => 'CdrRecord::Type::RecordType', required => 1);
 
 method insert_record () {
 	my $caller_id = $self->_insert_msisdn_into_table(
