@@ -32,15 +32,17 @@ method insert_msisdn_into_table ($msisdn, $table) {
 method insert_cdr_records ($columns, $records) {
 	my $class = 'CdrStoreApp::Model::CdrStore::CdrRecord';
 	eval {
-		my $tx = $self->mariadb->db->begin;
+		my $db = $self->mariadb->db;
+		my $tx = $db->begin;
 		foreach my $record (@$records) {
 			my %cdr_record_hash;
 			@cdr_record_hash{@$columns} = @$record;
+			# Delete empty fields to ensure we won't insert empty strings
+			_delete_empty_fields(\%cdr_record_hash);
+
 			try {
 				my $cdr_record = $class->new(
-					#caller_id    => $record->{caller_id},
-					#recipient_id => $record->{recipient_id},
-					mariadb => $self->mariadb,
+					db => $db,
 					%cdr_record_hash
 				);
 				$cdr_record->print_record();
@@ -111,6 +113,10 @@ method select_all_from_table ($table) {
 method delete_all_from_table ($table) {
 	$self->mariadb->db->delete($table);
 	return 1;
+}
+
+fun _delete_empty_fields ($record) {
+	map { delete $record->{$_} if $record->{$_} eq '' } keys %$record;
 }
 
 1;

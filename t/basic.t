@@ -138,6 +138,8 @@ subtest 'Test CSV upload' => sub {
 		type => 1,
 	});
 	is_deeply($invalid_calls_result, $expected_invalid_records, 'invalid records uploaded');
+
+	# TODO: test how many records do we actually have in customers and recipients tables
 };
 
 sub _generate_content {
@@ -177,4 +179,5 @@ caller_id,recipient,call_date,end_time,duration,cost,reference,currency,type
 ,448001000000,16/08/2016,14:21:50,31,0,C0FAAB1E6424B20D1625FEAAD5936053E,GBP,1
 441827000000,448002000000,16/08/2016,14:32:40,373,0,C639033F0752A937D951A6A2E33EB6910,GBP,1
 442036000000,448088000000,16/08/2016,14:05:29,149,0,C6C4EC9A8C4847E8AD1B1D6CD02491E79,GBP,2
+442036000000,448088000000,16/08/2016,14:05:29,iAmString,0,C6C4EC9A8C4847E8AD1B1D6CD02491E79,GBP,2
 447497000000,447909000000,18/08/2016,16:30:01,306,0.044,C2069DB0D6B16E3BCBDDE80CA9FF96E3A,GBP,2
