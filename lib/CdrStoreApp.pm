@@ -87,17 +87,10 @@ DROP TABLE IF EXISTS recipients;
 DROP TABLE IF EXISTS customers;
 
 -- 2 up
+
 CREATE TABLE IF NOT EXISTS invalid_call_records (
 	id int(10) unsigned NOT NULL AUTO_INCREMENT,
-	reference char(33) DEFAULT NULL,
-	caller_id decimal(15,0) unsigned DEFAULT NULL,
-	recipient_id decimal(15,0) unsigned DEFAULT NULL,
-	call_date date DEFAULT NULL,
-	end_time time DEFAULT NULL,
-	duration mediumint(8) unsigned DEFAULT NULL,
-	cost decimal(6,3) DEFAULT NULL,
-	currency char(3) DEFAULT NULL,
-	type smallint(1) DEFAULT NULL,
+	record TEXT,
 	PRIMARY KEY (id)
 );
 

@@ -2,10 +2,16 @@ package CdrStoreApp::Model::CdrStore;
 use Mojo::Base -base;
 
 use Carp qw(croak);
+use Exception::Class::Try::Catch;
 use Function::Parameters;
+use Moose;
+use MooseX::NonMoose;
+use CdrStoreApp::Model::CdrStore::CdrRecord;
 
+use feature 'say';
 
-has mariadb => sub { croak "mariadb is required" };
+#has mariadb => sub { croak "mariadb is required" };
+has mariadb => (is => 'ro', isa => 'Mojo::mysql', required => 1);
 
 method test ($search) {
 	$self->mariadb->db->query(<<'	SQL', $search)->hashes;
@@ -23,23 +29,53 @@ method insert_msisdn_into_table ($msisdn, $table) {
 	return $id;
 }
 
-method insert_cdr_records ($records) {
+method insert_cdr_records ($columns, $records) {
+	my $class = 'CdrStoreApp::Model::CdrStore::CdrRecord';
 	eval {
 		my $tx = $self->mariadb->db->begin;
 		foreach my $record (@$records) {
-			if (delete $record->{is_valid}) {
-				# Returns customer id
-				$record->{caller_id} = $self->insert_msisdn_into_table(
-					delete $record->{caller_id}, 'customers'
+			my %cdr_record_hash;
+			@cdr_record_hash{@$columns} = @$record;
+			try {
+				my $cdr_record = $class->new(
+					#caller_id    => $record->{caller_id},
+					#recipient_id => $record->{recipient_id},
+					mariadb => $self->mariadb,
+					%cdr_record_hash
 				);
-				# Returns recipient id
-				$record->{recipient_id} = $self->insert_msisdn_into_table(
-					delete $record->{recipient_id}, 'recipients'
+				$cdr_record->print_record();
+			} catch {
+				# If any exception occurs, store the record as invalid
+				my $action_message = 'inserting into invalid_call_records';
+
+				# TODO: Could not get the correct Moose exception, so I am matching the message
+				#if ($_->isa('Moose::Exception::AttributeIsRequired')) {
+				if ($_->message =~ /^Attribute \((\w+)\) is required/) {
+					say "ERROR: $class: $action_message, Attribute '$1' is required...";
+				} elsif ($_->message =~ /^Attribute \((\w+)\).*Validation failed for '(\w+)'/) {
+					say "ERROR: $class: $action_message, Validation of '$1' attribute failed, it is not $2...";
+				} else {
+					$_->rethrow();
+				}
+				$self->mariadb->db->insert(
+					'invalid_call_records',
+					{ record => join(',', @$record) }
 				);
-				$self->mariadb->db->insert('call_records', $record);
-			} else {
-				$self->mariadb->db->insert('invalid_call_records', $record);
-			}
+			};
+
+			#if (delete $record->{is_valid}) {
+			#	# Returns customer id
+			#	$record->{caller_id} = $self->insert_msisdn_into_table(
+			#		delete $record->{caller_id}, 'customers'
+			#	);
+			#	# Returns recipient id
+			#	$record->{recipient_id} = $self->insert_msisdn_into_table(
+			#		delete $record->{recipient_id}, 'recipients'
+			#	);
+			#	$self->mariadb->db->insert('call_records', $record);
+			#} else {
+			#	$self->mariadb->db->insert('invalid_call_records', $record);
+			#}
 		}
 		$tx->commit;
 	};

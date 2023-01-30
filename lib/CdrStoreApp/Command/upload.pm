@@ -30,29 +30,33 @@ method run ($filename) {
 
 	open my $fh, '<', $filename or croak "Cannot open file '$filename': $!";
 
-	$csv->column_names( $csv->getline($fh) );
+	my @columns = $csv->column_names( $csv->getline($fh) );
 
 	my @records;
-	while (my $row = $csv->getline_hr($fh)) {
+	my $user_message_template = 'Trying to insert %d to database...';
+	while (my $row = $csv->getline($fh)) {
 
-		# munge date
-		$row->{call_date} = $row->{call_date} =~ s|(\d{2})/(\d{2})/(\d{4})|$3/$2/$1|r;
-		# munge recipient to recipient_id
-		$row->{recipient_id} = delete $row->{recipient};
-		$row->{is_valid} = is_row_valid($row);
+		# TODO: Do not munge here
+		## munge date
+		#$row->{call_date} = $row->{call_date} =~ s|(\d{2})/(\d{2})/(\d{4})|$3/$2/$1|r;
+		## munge recipient to recipient_id
+		#$row->{recipient_id} = delete $row->{recipient};
+		#$row->{is_valid} = is_row_valid($row);
 
 		push @records, $row;
 
 		if (scalar @records % $self->batch_size == 0) {
-			say "Inserting ", scalar @records, " to database...";
-			$self->app->cdrstore->insert_cdr_records(\@records);
+			say sprintf($user_message_template, scalar @records);
+			$self->app->cdrstore->insert_cdr_records(\@columns, \@records);
 			@records = ();
 		}
 	}
 
 	# Insert the rest
-	say "Inserting ", scalar @records, " to database...";
-	$self->app->cdrstore->insert_cdr_records(\@records) if scalar @records;
+	if (scalar @records) {
+		say sprintf($user_message_template, scalar @records);
+		$self->app->cdrstore->insert_cdr_records(\@records);
+	}
 
 	return 1;
 }
