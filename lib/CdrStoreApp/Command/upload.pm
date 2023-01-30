@@ -22,7 +22,7 @@ $0 upload filename
 
 method _build_batch_size () {
 	my $batch_size = $self->app->config->{batch_size};
-	return defined $batch_size ? $batch_size : 500;
+	return defined $batch_size ? $batch_size : 100;
 }
 
 method run ($filename) {
@@ -44,12 +44,14 @@ method run ($filename) {
 		push @records, $row;
 
 		if (scalar @records % $self->batch_size == 0) {
+			say "Inserting ", scalar @records, " to database...";
 			$self->app->cdrstore->insert_cdr_records(\@records);
 			@records = ();
 		}
 	}
 
 	# Insert the rest
+	say "Inserting ", scalar @records, " to database...";
 	$self->app->cdrstore->insert_cdr_records(\@records) if scalar @records;
 
 	return 1;
