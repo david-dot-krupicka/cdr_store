@@ -32,8 +32,13 @@ cpan install Moose MooseX::NonMoose
 ```
 
 ### DB Schema
+  .... create a link here
+
 Created or updated with `bin/cdrstore.pl deploy`
 
 For the sake of the example, let's create simple tables which will just
 demonstrate a possible DB model, following a simple rule - if there are
 repeated records, store them in related table.
+
+## Testing
+`prove -I./lib -v t/basic.t` in applications home.
