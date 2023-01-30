@@ -14,9 +14,6 @@ has mariadb => sub {
 };
 
 method startup() {
-	# Increase upload limit to 1GiB
-	$self->max_request_size(1073741824);
-
 	$self->moniker('cdrstoreapp');
 	$self->plugin('Config');
 
