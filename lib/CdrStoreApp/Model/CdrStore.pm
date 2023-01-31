@@ -56,11 +56,32 @@ method insert_cdr_records ($columns, $records) {
 	return 1;
 }
 
-method select_all_records () {
+method select_cdr_by_reference ($reference) {
+	my $cdr = $self->select_all_records("reference = '$reference'")->first;
+
+	return $cdr if $cdr;
+
+	$cdr = $self->select_from_invalid_records_like_reference($reference)->first;
+
+	return { ierr => 'invalid_record', %{$cdr} } if $cdr;
+
+	return { ierr => 'not_found' }
+}
+
+method count_cdr ($start_date, $end_date, $call_type=undef) {
+	use Data::Dumper;
+	say Dumper $start_date;
+	say Dumper $end_date;
+	say Dumper $call_type;
+
+	return { ierr => 'kokot' }
+}
+
+method select_all_records ($condition=undef) {
 	my @columns = (
 		"c.msisdn AS caller_id",
 		"r.msisdn AS recipient",
-		"DATE_FORMAT(call_date, '%d/%m/%Y') AS call_date",
+		"DATE_FORMAT(call_date, '%Y/%m/%d') AS call_date",
 		"end_time",
 		"duration",
 		"cost",
@@ -68,22 +89,24 @@ method select_all_records () {
 		"currency",
 		"type",
 	);
+
+	my $where_clause = '';
+	$where_clause = "WHERE $condition " if defined $condition;
+
 	my $stmt = <<"	SQL";
 SELECT %s FROM call_records cdr
 JOIN customers c on cdr.caller_id = c.id
 JOIN recipients r on cdr.recipient = r.id
+${where_clause}
 	SQL
 	return $self->mariadb->db->query(sprintf($stmt, join(',', @columns)))->hashes;
 }
 
-# TODO: Get rid of this --------------------
-method test ($search) {
-	$self->mariadb->db->query(<<'	SQL', $search)->hashes;
-SELECT * FROM customers
-WHERE id=?
-	SQL
+method select_from_invalid_records_like_reference ($reference) {
+	return $self->mariadb->db->query(
+		"SELECT * FROM invalid_call_records WHERE record LIKE '%$reference%'"
+	)->hashes;
 }
-# TODO --------------------------------------
 
 fun _delete_empty_fields ($record) {
 	map { delete $record->{$_} if $record->{$_} eq '' } keys %$record;

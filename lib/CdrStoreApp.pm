@@ -27,9 +27,6 @@ method startup() {
 		);
 	});
 
-	# TODO: remove
-	my $r = $self->routes;
-
 	# API
 	$self->plugin("OpenAPI" => {url => $self->home->rel_file("spec/spec.yaml")});
 }
