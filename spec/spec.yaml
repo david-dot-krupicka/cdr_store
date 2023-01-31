@@ -48,10 +48,12 @@ paths:
       summary: Count all CDRs in given time range, up to 1 month
       parameters:
         - name: start_date
+          description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
           in: query
           required: false
           type: string
         - name: end_date
+          description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
           in: query
           required: false
           type: string
@@ -78,10 +80,12 @@ paths:
       summary: Get all CDR's in given time range, for given caller, up to 1 month
       parameters:
         - name: start_date
+          description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
           in: query
           required: true
           type: string
         - name: end_date
+          description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
           in: query
           required: true
           type: string
@@ -112,10 +116,12 @@ paths:
       summary: Get all CDR's in given time range, for given caller, up to 1 month
       parameters:
         - name: start_date
+          description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
           in: query
           required: true
           type: string
         - name: end_date
+          description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
           in: query
           required: true
           type: string
@@ -164,7 +170,6 @@ definitions:
     required:
       - action
       - status
-      - caller_id
       - count
       - total_call_duration
     properties:
@@ -174,8 +179,6 @@ definitions:
         type: integer
         minimum: 200
         maximum: 299
-      caller_id:
-        type: integer
       count:
         type: integer
       total_call_duration:

@@ -30,7 +30,7 @@ cpan install Function::Parameters
 cpan install Text::CSV_XS
 cpan install Exception::Class::Try::Catch
 cpan install Moose MooseX::NonMoose
-cpan install Date::Simple
+cpan install Time::Piece
 ```
 
 ### DB Schema
