@@ -7,11 +7,10 @@ use Function::Parameters;
 use Moose;
 use MooseX::NonMoose;
 use CdrStoreApp::Model::CdrStore::CdrRecord;
-use Date::Simple;
+use CdrStoreApp::Model::CdrStore::LookupHandler;
 
 use feature 'say';
 
-#has mariadb => sub { croak "mariadb is required" };
 has mariadb => (is => 'ro', isa => 'Mojo::mysql', required => 1);
 
 method insert_cdr_records ($columns, $records) {
@@ -58,27 +57,46 @@ method insert_cdr_records ($columns, $records) {
 }
 
 method select_cdr_by_reference ($reference) {
-	my $cdr = $self->select_all_records("reference = '$reference'")->first;
-
+	# Select from valid records
+	my $cdr = $self->select_all_records("WHERE reference = '$reference'")->first;
 	return $cdr if $cdr;
 
+	# Select from invalid records
 	$cdr = $self->select_from_invalid_records_like_reference($reference)->first;
-
 	return { ierr => 'invalid_record', %{$cdr} } if $cdr;
 
+	# Else return not found
 	return { ierr => 'not_found' }
 }
 
-method count_cdr ($start_date, $end_date, $call_type=undef) {
-	use Data::Dumper;
-	say Dumper $start_date;
-	say Dumper $end_date;
-	say Dumper $call_type;
+method count_cdr ($start, $end, $call_type=undef) {
+	my ($lookup_handler, $err);
+	try {
+		$lookup_handler = CdrStoreApp::Model::CdrStore::LookupHandler->new(
+			maybe_start_date => $start,
+			maybe_end_date   => $end,
+			call_type_filter => $call_type,
+		);
+	} catch {
+		$err = $_;
+	};
+	if (defined $err) {
+		$err->rethrow() unless $err->{message}->{ierr};
+		return $err->{message};
+	}
 
-	return { ierr => 'kokot' }
+	#
+	my ($stmt, @binds) = $lookup_handler->construct_count_cdr_stmt();
+	use Data::Dumper;
+	say Dumper $stmt;
+	say Dumper @binds;
+
+	say Dumper $self->mariadb->db->query($stmt, @binds);
+
+	return $self->mariadb->db->query($stmt, @binds)->hashes->first;
 }
 
-method select_all_records ($condition=undef) {
+method select_all_records ($where_clause='') {
 	my @columns = (
 		"c.msisdn AS caller_id",
 		"r.msisdn AS recipient",
@@ -91,9 +109,6 @@ method select_all_records ($condition=undef) {
 		"type",
 	);
 
-	my $where_clause = '';
-	$where_clause = "WHERE $condition " if defined $condition;
-
 	my $stmt = <<"	SQL";
 SELECT %s FROM call_records cdr
 JOIN customers c on cdr.caller_id = c.id
@@ -101,6 +116,15 @@ JOIN recipients r on cdr.recipient = r.id
 ${where_clause}
 	SQL
 	return $self->mariadb->db->query(sprintf($stmt, join(',', @columns)))->hashes;
+}
+
+method select_count_and_duration ($where_clause) {
+	my $stmt = <<"	SQL";
+SELECT COUNT(*) AS count, SUM(duration)
+FROM call_records
+${where_clause}
+	SQL
+	return $self->mariadb->db->query($stmt)->hashes->first;
 }
 
 method select_from_invalid_records_like_reference ($reference) {

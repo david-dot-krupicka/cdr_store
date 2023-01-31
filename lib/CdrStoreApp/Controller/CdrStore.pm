@@ -35,8 +35,10 @@ sub count_cdr ($c) {
 		$c->param('end_date'),
 		$c->param('call_type')
 	);
+	use Data::Dumper;
+	say Dumper $data;
 
-	$c->render(json => { status => 200 });
+	$c->render(json => { data => $data, status => 200 });
 };
 
 sub cdr_by_caller ($c) {
