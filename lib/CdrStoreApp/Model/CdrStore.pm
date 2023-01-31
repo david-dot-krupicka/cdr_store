@@ -58,7 +58,7 @@ method insert_cdr_records ($columns, $records) {
 
 method select_all_records () {
 	my @columns = (
-		"c.msisdn AS called_id",
+		"c.msisdn AS caller_id",
 		"r.msisdn AS recipient",
 		"DATE_FORMAT(call_date, '%d/%m/%Y') AS call_date",
 		"end_time",
@@ -76,32 +76,12 @@ JOIN recipients r on cdr.recipient = r.id
 	return $self->mariadb->db->query(sprintf($stmt, join(',', @columns)))->hashes;
 }
 
-# TODO: Get rid of this too ---------------
-# Mainly used in testing
-method select_all_from_table ($table) {
-	return $self->mariadb->db->query("SELECT * FROM $table")->hashes;
-}
-
-method delete_all_from_table ($table) {
-	$self->mariadb->db->delete($table);
-	return 1;
-}
-
 # TODO: Get rid of this --------------------
 method test ($search) {
 	$self->mariadb->db->query(<<'	SQL', $search)->hashes;
 SELECT * FROM customers
 WHERE id=?
 	SQL
-}
-
-method insert_msisdn_into_table ($msisdn, $table) {
-	my $id = $self->mariadb->db->query(
-		"INSERT IGNORE INTO $table (MSISDN) VALUES (?)", $msisdn
-	)->last_insert_id;
-	$id = $self->mariadb->db->select(
-		$table, undef, {MSISDN => $msisdn})->hash->{id} if $id == 0;
-	return $id;
 }
 # TODO --------------------------------------
 

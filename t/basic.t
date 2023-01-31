@@ -5,7 +5,7 @@ use Test::Exception;
 use Test::Mojo;
 use File::Temp qw(tempfile);
 use Mojo::File qw(curfile);
-
+use CdrStoreApp::Model::CdrStore::CdrRecord;
 
 
 my $t = Test::Mojo->new(
@@ -34,29 +34,57 @@ subtest 'Required Perl modules' => sub {
 };
 
 subtest 'Test deploy command and initialize DB' => sub {
+	# Testing objects to test inserts to customers and recipients tables
+	my $test_cdr1 = CdrStoreApp::Model::CdrStore::CdrRecord->new(
+		call_date => '01/31/2023',
+		caller_id => '420123456789',
+		cost      => '0.044',
+		currency  => 'GBP',
+		db        => $t->app->mariadb->db,
+		duration  => 306,
+		end_time  => '16:30:01',
+		recipient => '420349822711',
+		reference => 'C2069DB0D6B16E3BCBDDE80CA9FF96E3A',
+		type      => 2,
+	);
+
+	my $test_cdr2 = CdrStoreApp::Model::CdrStore::CdrRecord->new(
+		call_date => '01/31/2023',
+		caller_id => '420987654321',
+		cost      => '0.044',
+		currency  => 'GBP',
+		db        => $t->app->mariadb->db,
+		duration  => 306,
+		end_time  => '16:30:01',
+		recipient => '420444677333',
+		reference => 'C2069DB0D6B16E3BCBDDE80CA9FF96E3A',
+		type      => 2,
+	);
+
 	throws_ok { $t->app->commands->run('deploy', '-v', -1) } qr/Version -1 has no migration/, 'undefined version caught ok';
 	ok( $t->app->commands->run('deploy', '-r') eq 1, 'reset db ok' );
 
-	# Insert some row to test the version upgrade does not delete the entries
-	my $msisdn = 420123456789;
-	my $msisdn2 = 420987654321;
+	# Test insert to customers table
+	ok( $test_cdr1->_insert_msisdn_into_table('customers', $test_cdr1->{caller_id}) eq 1, 'insert msisdn into customers' );
+	ok( $test_cdr2->_insert_msisdn_into_table('customers', $test_cdr2->{caller_id}) eq 2, 'insert 2nd msisdn into customers, returns id 2' );
+	lives_ok { $test_cdr1->_insert_msisdn_into_table('customers', $test_cdr1->{caller_id}) } 'insert ignore on duplicate does not fail';
+	ok( $test_cdr1->_insert_msisdn_into_table('customers', $test_cdr1->{caller_id}) eq 1, 'insert 1st msisdn into customers, returns id 1' );
 
-	ok( $t->app->cdrstore->insert_msisdn_into_table($msisdn, 'customers') eq 1, 'insert msisdn into customers' );
-	ok( $t->app->cdrstore->insert_msisdn_into_table($msisdn2, 'customers') eq 2, 'insert 2nd msisdn into customers, returns id 2' );
-
-	lives_ok { $t->app->cdrstore->insert_msisdn_into_table($msisdn, 'customers') } 'insert ignore on duplicate does not fail';
-	ok( $t->app->cdrstore->insert_msisdn_into_table($msisdn, 'customers') eq 1, 'insert 1st msisdn into customers, returns id 1' );
+	# Test the same with recipients table
+	ok( $test_cdr1->_insert_msisdn_into_table('recipients', $test_cdr1->{recipient}) eq 1, 'insert msisdn into customers' );
+	ok( $test_cdr2->_insert_msisdn_into_table('recipients', $test_cdr2->{recipient}) eq 2, 'insert 2nd msisdn into customers, returns id 2' );
+	lives_ok { $test_cdr1->_insert_msisdn_into_table('recipients', $test_cdr1->{recipient}) } 'insert ignore on duplicate does not fail';
+	ok( $test_cdr1->_insert_msisdn_into_table('recipients', $test_cdr1->{recipient}) eq 1, 'insert 1st msisdn into customers, returns id 1' );
 
 	ok( $t->app->commands->run('deploy', '-v', 2) eq 1, 'upgrade to version 2 ok' );
 
-	ok( $t->app->cdrstore->delete_all_from_table('customers') eq 1, 'delete all from customers');
+	ok( _delete_all_from_table($t, 'customers') eq 1, 'delete all from customers');
 };
 
 subtest 'Test CSV upload' => sub {
 	throws_ok { $t->app->commands->run('upload', 'xxxx') } qr/Cannot open file 'xxxx'/, 'file does not exist okay';
 
 	my $csvfile = _generate_content();
-	# wrong content, like invalid type not tested, but empty records will be NULL
 
 	ok( $t->app->commands->run('upload', $csvfile) eq 1, 'upload looks ok' );
 
@@ -66,63 +94,64 @@ subtest 'Test CSV upload' => sub {
 	my $expected_records = $class->new(
 		{
 			'call_date' => '18/08/2016',
-			'duration' => 306,
-			'type' => 2,
-			'cost' => '0.044',
-			'called_id' => '447497000000',
-			'currency' => 'GBP',
-			'reference' => 'C2069DB0D6B16E3BCBDDE80CA9FF96E3A',
+			'caller_id' => '447497000000',
+			'cost'      => '0.044',
+			'currency'  => 'GBP',
+			'duration'  => 306,
+			'end_time'  => '16:30:01',
 			'recipient' => '447909000000',
-			'end_time' => '16:30:01',
+			'reference' => 'C2069DB0D6B16E3BCBDDE80CA9FF96E3A',
+			'type'      => 2,
 		},
 		{
 			'call_date' => '16/08/2016',
-			'cost' => '0.000',
-			'type' => 2,
-			'duration' => 244,
+			'caller_id' => '442036000000',
+			'cost'      => '0.000',
+			'currency'  => 'GBP',
+			'duration'  => 244,
+			'end_time'  => '14:00:47',
 			'recipient' => '44800833833',
 			'reference' => 'C50B5A7BDB8D68B8512BB14A9D363CAA1',
-			'currency' => 'GBP',
-			'end_time' => '14:00:47',
-			'called_id' => '442036000000',
+			'type'      => 2,
 		},
 		{
-			'reference' => 'C5DA9724701EEBBA95CA2CC5617BA93E4',
-			'currency' => 'GBP',
+			'call_date' => '16/08/2016',
+			'caller_id' => '441216000000',
+			'cost'      => '0.000',
+			'currency'  => 'GBP',
+			'duration'  => 43,
+			'end_time'  => '14:21:33',
 			'recipient' => '448000000000',
-			'end_time' => '14:21:33',
-			'called_id' => '441216000000',
-			'call_date' => '16/08/2016',
-			'type' => 2,
-			'duration' => 43,
-			'cost' => '0.000',
+			'reference' => 'C5DA9724701EEBBA95CA2CC5617BA93E4',
+			'type'      => 2,
 		},
 		{
+			'caller_id' => '441827000000',
 			'call_date' => '16/08/2016',
-			'cost' => '0.000',
-			'duration' => 373,
-			'type' => 1,
+			'cost'      => '0.000',
+			'currency'  => 'GBP',
+			'duration'  => 373,
+			'end_time'  => '14:32:40',
 			'recipient' => '448002000000',
-			'currency' => 'GBP',
 			'reference' => 'C639033F0752A937D951A6A2E33EB6910',
-			'end_time' => '14:32:40',
-			'called_id' => '441827000000',
+			'type'      => 1,
 		},
 		{
-			'duration' => 149,
-			'type' => 2,
-			'cost' => '0.000',
 			'call_date' => '16/08/2016',
-			'called_id' => '442036000000',
-			'end_time' => '14:05:29',
-			'reference' => 'C6C4EC9A8C4847E8AD1B1D6CD02491E79',
-			'currency' => 'GBP',
+			'caller_id' => '442036000000',
+			'cost'      => '0.000',
+			'currency'  => 'GBP',
+			'duration'  => 149,
+			'end_time'  => '14:05:29',
 			'recipient' => '448088000000',
+			'reference' => 'C6C4EC9A8C4847E8AD1B1D6CD02491E79',
+			'type'      => 2,
+
 		},
 	);
 	is_deeply($calls_result, $expected_records, 'valid records uploaded');
 
-	my $invalid_calls_result = $t->app->cdrstore->select_all_from_table('invalid_call_records');
+	my $invalid_calls_result = _select_all_from_table($t, 'invalid_call_records');
 	isa_ok($invalid_calls_result, $class);
 	my $expected_invalid_records = $class->new(
 		{
@@ -135,9 +164,9 @@ subtest 'Test CSV upload' => sub {
 		},
 	);
 	is_deeply($invalid_calls_result, $expected_invalid_records, 'invalid records uploaded');
-
-	# TODO: test how many records do we actually have in customers and recipients tables
 };
+
+done_testing();
 
 sub _generate_content {
 	my ($fh, $tempfile) = tempfile(
@@ -154,6 +183,17 @@ sub _generate_content {
 	return $tempfile;
 }
 
+sub _select_all_from_table {
+	my ($t, $table) = @_;
+	return $t->app->mariadb->db->query("SELECT * FROM $table")->hashes;
+}
+
+sub _delete_all_from_table {
+	my ($t, $table) = @_;
+	$t->app->mariadb->db->delete($table);
+	return 1;
+}
+
 #subtest 'Test upload workflow' => sub {
 #	# Test if the HTML update form exists
 #	$t->get_ok('/upload')
@@ -167,7 +207,7 @@ sub _generate_content {
 #	->status_is(200)
 #};
 
-done_testing();
+
 
 __DATA__
 caller_id,recipient,call_date,end_time,duration,cost,reference,currency,type
