@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS customers (
 );
 CREATE TABLE IF NOT EXISTS recipients (
 	id int(10) unsigned NOT NULL AUTO_INCREMENT,
-	MSISDN decimal(15,0) NOT NULL,
+	MSISDN decimal(15,0) NOT NULL UNIQUE,
 	PRIMARY KEY(id)
 );
 CREATE TABLE IF NOT EXISTS call_records (
