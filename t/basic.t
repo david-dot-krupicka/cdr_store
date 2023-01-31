@@ -26,7 +26,7 @@ subtest 'Required Perl modules' => sub {
 		Moose
 		MooseX::NonMoose
 		Text::CSV_XS
-		Time::Piece
+		Date::Simple
 	);
 
 	for my $module (@modules) {
