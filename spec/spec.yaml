@@ -50,12 +50,12 @@ paths:
         - name: start_date
           description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
           in: query
-          required: false
+          required: true
           type: string
         - name: end_date
           description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
           in: query
-          required: false
+          required: true
           type: string
         - name: call_type
           in: query
@@ -67,10 +67,14 @@ paths:
           description: Returns count of CDR records and total call duration
           schema:
             $ref: "#/definitions/SuccessCdrCount"
-        #default:
-        #  description: error response
-        #  schema:
-        #    $ref: "#/definitions/ErrorModel"
+        400:
+          description: custom error response
+          schema:
+            $ref: "#/definitions/ErrorModel"
+        default:
+          description: error response
+          schema:
+            $ref: "#/definitions/ErrorModel"
 
   /calls/cdr_by_caller:
     get:
@@ -170,7 +174,7 @@ definitions:
     required:
       - action
       - status
-      - count
+      - cdr_count
       - total_call_duration
     properties:
       action:
@@ -179,10 +183,11 @@ definitions:
         type: integer
         minimum: 200
         maximum: 299
-      count:
+      cdr_count:
         type: integer
       total_call_duration:
-        type: integer
+        description: Total duration in hh:mm:ss format
+        type: string
 
   SuccessCdrList:
     type: object

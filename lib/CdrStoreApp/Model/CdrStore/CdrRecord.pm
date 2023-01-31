@@ -27,18 +27,19 @@ method insert_record () {
 		$self->recipient,
 	);
 
+	my $call_datetime = _format_datetime($self->call_date, $self->end_time);
+
 	$self->db->insert(
 		'call_records',
 			{
-				reference => $self->reference,
-				caller_id => $caller_id,
-				recipient => $recipient_id,
-				call_date => _format_date_string($self->call_date),
-				end_time  => $self->end_time,
-				duration  => $self->duration,
-				cost      => $self->cost,
-				currency  => $self->currency,
-				type      => $self->type,
+				reference     => $self->reference,
+				caller_id     => $caller_id,
+				recipient     => $recipient_id,
+				call_datetime => $call_datetime,
+				duration      => $self->duration,
+				cost          => $self->cost,
+				currency      => $self->currency,
+				type          => $self->type,
 			}
 	);
 }
@@ -52,8 +53,9 @@ method _insert_msisdn_into_table ($table, $msisdn) {
 	return $id;
 }
 
-fun _format_date_string ($date) {
-	return $date =~ s|(\d{2})/(\d{2})/(\d{4})|$3/$2/$1|r;
+fun _format_datetime ($date, $time) {
+	$date = $date =~ s|(\d{2})/(\d{2})/(\d{4})|$3/$2/$1|r;
+	return "$date $time";
 }
 
 1;

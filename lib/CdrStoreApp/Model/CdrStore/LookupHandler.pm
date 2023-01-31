@@ -53,32 +53,21 @@ method BUILD ($args) {
 }
 
 method construct_count_cdr_stmt () {
-	my $type_filter = $self->call_type_filter ? 'AND call_type = ?' : '';
+	my $type_filter = $self->call_type_filter ? 'AND type = ?' : '';
 	my $stmt = <<"	SQL";
-SELECT COUNT(*) AS count, SUM(duration) as total_call_duration
+SELECT COUNT(*) AS cdr_count, SEC_TO_TIME(SUM(duration)) as total_call_duration
 FROM call_records
-WHERE call_date BETWEEN ? AND ?
-AND end_time BETWEEN ? AND ?
+WHERE call_datetime BETWEEN ? AND ?
 ${type_filter}
 	SQL
 
 	my @binds = (
-		$self->_get_date($self->start_datetime),
-		$self->_get_date($self->end_datetime),
-		$self->_get_time($self->start_datetime),
-		$self->_get_time($self->end_datetime),
+		$self->start_datetime->strftime('%Y-%m-%d %H:%M:%S'),
+		$self->end_datetime->strftime('%Y-%m-%d %H:%M:%S'),
 	);
 	push @binds, $self->call_type_filter if $self->call_type_filter;
 
 	return $stmt, @binds;
-}
-
-method _get_date($datetime) {
-	return $datetime->strftime('%Y-%m-%d');
-}
-
-method _get_time($datetime) {
-	return $datetime->strftime('%H:%M:%S');
 }
 
 1;

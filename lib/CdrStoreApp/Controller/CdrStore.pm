@@ -35,10 +35,20 @@ sub count_cdr ($c) {
 		$c->param('end_date'),
 		$c->param('call_type')
 	);
-	use Data::Dumper;
-	say Dumper $data;
 
-	$c->render(json => { data => $data, status => 200 });
+	if ($data->{ierr}) {
+		use Data::Dumper;
+		say Dumper $data;
+		return $c->render(openapi => {
+			_render_for_all($action, 400),
+			%$data
+		}, status => 400)
+	}
+
+	$c->render(openapi => {
+		_render_for_all($action, 200),
+		%$data
+	}, status => 200 );
 };
 
 sub cdr_by_caller ($c) {

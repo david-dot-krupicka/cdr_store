@@ -77,7 +77,7 @@ subtest 'Test deploy command and initialize DB' => sub {
 	lives_ok { $test_cdr1->_insert_msisdn_into_table('recipients', $test_cdr1->{recipient}) } 'insert ignore on duplicate does not fail';
 	ok( $test_cdr1->_insert_msisdn_into_table('recipients', $test_cdr1->{recipient}) eq 1, 'insert 1st msisdn into customers, returns id 1' );
 
-	ok( $t->app->commands->run('deploy', '-v', 2) eq 1, 'upgrade to version 2 ok' );
+	ok( $t->app->commands->run('deploy', '-v', 3) eq 1, 'upgrade to version 3 ok' );
 
 	ok( _delete_all_from_table($t, 'customers') eq 1, 'delete all from customers');
 };

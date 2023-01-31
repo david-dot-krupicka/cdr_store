@@ -85,13 +85,7 @@ method count_cdr ($start, $end, $call_type=undef) {
 		return $err->{message};
 	}
 
-	#
 	my ($stmt, @binds) = $lookup_handler->construct_count_cdr_stmt();
-	use Data::Dumper;
-	say Dumper $stmt;
-	say Dumper @binds;
-
-	say Dumper $self->mariadb->db->query($stmt, @binds);
 
 	return $self->mariadb->db->query($stmt, @binds)->hashes->first;
 }
@@ -100,8 +94,8 @@ method select_all_records ($where_clause='') {
 	my @columns = (
 		"c.msisdn AS caller_id",
 		"r.msisdn AS recipient",
-		"DATE_FORMAT(call_date, '%d/%m/%Y') AS call_date",
-		"end_time",
+		"DATE_FORMAT(call_datetime, '%d/%m/%Y') AS call_date",
+		"DATE_FORMAT(call_datetime, '%H:%i:%S') AS end_time",
 		"duration",
 		"cost",
 		"reference",

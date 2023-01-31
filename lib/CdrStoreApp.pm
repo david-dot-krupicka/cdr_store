@@ -90,3 +90,42 @@ CREATE TABLE IF NOT EXISTS invalid_call_records (
 -- 2 down
 
 DROP TABLE IF EXISTS invalid_call_records;
+
+-- 3 up
+
+DROP TABLE IF EXISTS call_records;
+CREATE TABLE IF NOT EXISTS call_records (
+	reference char(33) NOT NULL,
+	caller_id int(10) unsigned NOT NULL,
+	recipient int(10) unsigned NOT NULL,
+	call_datetime datetime DEFAULT NULL,
+	duration mediumint(8) unsigned DEFAULT 0,
+	cost decimal(6,3) DEFAULT NULL,
+	currency char(3) DEFAULT NULL,
+	type smallint(1) DEFAULT NULL CHECK (type in (1,2)),
+	PRIMARY KEY (reference),
+	KEY fk_caller_id (caller_id),
+	KEY fk_recipient (recipient),
+	CONSTRAINT fk_caller_id FOREIGN KEY (caller_id) REFERENCES customers (id),
+	CONSTRAINT fk_recipient FOREIGN KEY (recipient) REFERENCES recipients (id)
+);
+
+-- 3 down
+
+DROP TABLE IF EXISTS call_records;
+CREATE TABLE IF NOT EXISTS call_records (
+	reference char(33) NOT NULL,
+	caller_id int(10) unsigned NOT NULL,
+	recipient int(10) unsigned NOT NULL,
+	call_date date DEFAULT NULL,
+	end_time time DEFAULT NULL,
+	duration mediumint(8) unsigned DEFAULT 0,
+	cost decimal(6,3) DEFAULT NULL,
+	currency char(3) DEFAULT NULL,
+	type smallint(1) DEFAULT NULL CHECK (type in (1,2)),
+	PRIMARY KEY (reference),
+	KEY fk_caller_id (caller_id),
+	KEY fk_recipient (recipient),
+	CONSTRAINT fk_caller_id FOREIGN KEY (caller_id) REFERENCES customers (id),
+	CONSTRAINT fk_recipient FOREIGN KEY (recipient) REFERENCES recipients (id)
+);
