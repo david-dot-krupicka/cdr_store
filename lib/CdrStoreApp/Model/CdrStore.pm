@@ -81,7 +81,7 @@ method select_all_records ($condition=undef) {
 	my @columns = (
 		"c.msisdn AS caller_id",
 		"r.msisdn AS recipient",
-		"DATE_FORMAT(call_date, '%Y/%m/%d') AS call_date",
+		"DATE_FORMAT(call_date, '%d/%m/%Y') AS call_date",
 		"end_time",
 		"duration",
 		"cost",
