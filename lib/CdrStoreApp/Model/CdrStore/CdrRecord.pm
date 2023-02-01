@@ -27,6 +27,7 @@ method insert_record () {
 		$self->recipient,
 	);
 
+	# TODO: Use Time::Piece and validate
 	my $call_datetime = _format_datetime($self->call_date, $self->end_time);
 
 	$self->db->insert(

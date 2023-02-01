@@ -37,8 +37,6 @@ sub count_cdr ($c) {
 	);
 
 	if ($data->{ierr}) {
-		use Data::Dumper;
-		say Dumper $data;
 		return $c->render(openapi => {
 			_render_for_all($action, 400),
 			%$data
