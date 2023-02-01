@@ -93,19 +93,19 @@ subtest 'Test CSV upload' => sub {
 	my $class = 'Mojo::Collection';
 	my $lookup_handler = CdrStoreApp::Model::CdrStore::LookupHandler->new();
 	my $calls_result = $t->app->mariadb->db->query(
-		$lookup_handler->compose_all_columns_select
+		$lookup_handler->compose_all_columns_select . ' ORDER BY reference'			# TODO: I know, this ORDER BY is silly
 	)->hashes;
 	isa_ok($calls_result, $class);
 	my $expected_records = $class->new(
 		{
-			'call_date' => '18/08/2016',
-			'caller_id' => '447497000000',
-			'cost'      => '0.044',
+			'call_date' => '16/08/2016',
+			'caller_id' => '441216000000',
+			'cost'      => '0.000',
 			'currency'  => 'GBP',
-			'duration'  => 306,
-			'end_time'  => '16:30:01',
-			'recipient' => '447909000000',
-			'reference' => 'C2069DB0D6B16E3BCBDDE80CA9FF96E3A',
+			'duration'  => 43,
+			'end_time'  => '14:21:33',
+			'recipient' => '448000000000',
+			'reference' => 'reference1',
 			'type'      => 2,
 		},
 		{
@@ -116,18 +116,7 @@ subtest 'Test CSV upload' => sub {
 			'duration'  => 244,
 			'end_time'  => '14:00:47',
 			'recipient' => '44800833833',
-			'reference' => 'C50B5A7BDB8D68B8512BB14A9D363CAA1',
-			'type'      => 2,
-		},
-		{
-			'call_date' => '16/08/2016',
-			'caller_id' => '441216000000',
-			'cost'      => '0.000',
-			'currency'  => 'GBP',
-			'duration'  => 43,
-			'end_time'  => '14:21:33',
-			'recipient' => '448000000000',
-			'reference' => 'C5DA9724701EEBBA95CA2CC5617BA93E4',
+			'reference' => 'reference2',
 			'type'      => 2,
 		},
 		{
@@ -138,7 +127,7 @@ subtest 'Test CSV upload' => sub {
 			'duration'  => 373,
 			'end_time'  => '14:32:40',
 			'recipient' => '448002000000',
-			'reference' => 'C639033F0752A937D951A6A2E33EB6910',
+			'reference' => 'reference4',
 			'type'      => 1,
 		},
 		{
@@ -149,9 +138,20 @@ subtest 'Test CSV upload' => sub {
 			'duration'  => 149,
 			'end_time'  => '14:05:29',
 			'recipient' => '448088000000',
-			'reference' => 'C6C4EC9A8C4847E8AD1B1D6CD02491E79',
+			'reference' => 'reference5',
 			'type'      => 2,
 
+		},
+		{
+			'call_date' => '18/08/2016',
+			'caller_id' => '447497000000',
+			'cost'      => '0.044',
+			'currency'  => 'GBP',
+			'duration'  => 306,
+			'end_time'  => '16:30:01',
+			'recipient' => '447909000000',
+			'reference' => 'reference7',
+			'type'      => 2,
 		},
 	);
 	is_deeply($calls_result, $expected_records, 'valid records uploaded');
@@ -161,11 +161,11 @@ subtest 'Test CSV upload' => sub {
 	my $expected_invalid_records = $class->new(
 		{
 			id     => 1,
-			record => ',448001000000,16/08/2016,14:21:50,31,0,C0FAAB1E6424B20D1625FEAAD5936053E,GBP,1',
+			record => ',448001000000,16/08/2016,14:21:50,31,0,reference3,GBP,1',
 		},
 		{
 			id     => 2,
-			record => '442036000000,448088000000,16/08/2016,14:05:29,iAmString,0,C6C4EC9A8C4847E8AD1B1D6CD02491E79,GBP,2',
+			record => '442036000000,448088000000,16/08/2016,14:05:29,iAmString,0,reference6,GBP,2',
 		},
 	);
 	is_deeply($invalid_calls_result, $expected_invalid_records, 'invalid records uploaded');
@@ -216,10 +216,10 @@ sub _delete_all_from_table {
 
 __DATA__
 caller_id,recipient,call_date,end_time,duration,cost,reference,currency,type
-441216000000,448000000000,16/08/2016,14:21:33,43,0,C5DA9724701EEBBA95CA2CC5617BA93E4,GBP,2
-442036000000,44800833833,16/08/2016,14:00:47,244,0,C50B5A7BDB8D68B8512BB14A9D363CAA1,GBP,2
-,448001000000,16/08/2016,14:21:50,31,0,C0FAAB1E6424B20D1625FEAAD5936053E,GBP,1
-441827000000,448002000000,16/08/2016,14:32:40,373,0,C639033F0752A937D951A6A2E33EB6910,GBP,1
-442036000000,448088000000,16/08/2016,14:05:29,149,0,C6C4EC9A8C4847E8AD1B1D6CD02491E79,GBP,2
-442036000000,448088000000,16/08/2016,14:05:29,iAmString,0,C6C4EC9A8C4847E8AD1B1D6CD02491E79,GBP,2
-447497000000,447909000000,18/08/2016,16:30:01,306,0.044,C2069DB0D6B16E3BCBDDE80CA9FF96E3A,GBP,2
+441216000000,448000000000,16/08/2016,14:21:33,43,0,reference1,GBP,2
+442036000000,44800833833,16/08/2016,14:00:47,244,0,reference2,GBP,2
+,448001000000,16/08/2016,14:21:50,31,0,reference3,GBP,1
+441827000000,448002000000,16/08/2016,14:32:40,373,0,reference4,GBP,1
+442036000000,448088000000,16/08/2016,14:05:29,149,0,reference5,GBP,2
+442036000000,448088000000,16/08/2016,14:05:29,iAmString,0,reference6,GBP,2
+447497000000,447909000000,18/08/2016,16:30:01,306,0.044,reference7,GBP,2
