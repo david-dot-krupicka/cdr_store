@@ -1,7 +1,7 @@
 # cdr_store
 
 ## API Documentation
-#### [Online ReDoc documentation](https://redocly.github.io/redoc/?url=https://github.com/david-dot-krupicka/cdr_store/blob/master/spec/spec.yaml#operation/cdrByCallerTop)
+#### [Online ReDoc documentation](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/david-dot-krupicka/cdr_store/develop/spec/spec.yaml)
 #### [Local ReDoc documentation](index.html)
 
 ## Initial setup

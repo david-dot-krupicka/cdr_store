@@ -1,5 +1,3 @@
----
-
 swagger: "2.0"
 info:
     version: 1.0
@@ -39,7 +37,6 @@ paths:
           description: Invalid CDR record
           schema:
             $ref: "#/definitions/ErrorModelInvalidRecord"
-
   /count_cdr:
     get:
       operationId: countCdr
@@ -75,7 +72,6 @@ paths:
           description: error response
           schema:
             $ref: "#/definitions/ErrorModel"
-
   /cdr_by_caller:
     get:
       operationId: cdrByCaller
@@ -111,7 +107,6 @@ paths:
         #  description: error response
         #  schema:
         #    $ref: "#/definitions/ErrorModel"
-
   /cdr_by_caller/top:
     get:
       operationId: cdrByCallerTop
@@ -151,7 +146,6 @@ paths:
         #  description: error response
         #  schema:
         #    $ref: "#/definitions/ErrorModel"
-
 definitions:
   SuccessCdrResponse:
     type: object
@@ -168,7 +162,6 @@ definitions:
         maximum: 299
       cdr:
         $ref: "#/definitions/CdrObject"
-
   SuccessCdrCount:
     type: object
     required:
@@ -188,7 +181,6 @@ definitions:
       total_call_duration:
         description: Total duration in hh:mm:ss format
         type: string
-
   SuccessCdrList:
     type: object
     required:
@@ -209,7 +201,6 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/CdrObject"
-
   CdrObject:
     type: object
     required:
@@ -245,7 +236,6 @@ definitions:
         type: integer
         minimum: 1
         maximum: 2
-
   ErrorModel:
     type: object
     required:
@@ -261,7 +251,6 @@ definitions:
         type: integer
         minimum: 100
         maximum: 600
-
   ErrorModelInvalidRecord:
     allOf:
       - $ref: '#/definitions/ErrorModel'
