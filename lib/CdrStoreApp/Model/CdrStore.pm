@@ -79,8 +79,10 @@ method select_cdr_by_reference ($reference) {
 	return { ierr => 'not_found' }
 }
 
+# TODO: Almost copy paste...
 method count_cdr ($start, $end, $call_type=undef) {
 	my ($lookup_handler, $err);
+	# TODO: try -> catch -> err not DRY, improve
 	try {
 		$lookup_handler = CdrStoreApp::Model::CdrStore::LookupHandler->new(
 			maybe_start_date => $start,
@@ -98,6 +100,48 @@ method count_cdr ($start, $end, $call_type=undef) {
 	return $self->mariadb->db->query(
 		$lookup_handler->compose_count_cdr_statement
 	)->hashes->first;
+}
+
+# TODO: Copy paste...
+method cdr_by_caller ($start, $end, $caller_id, $call_type=undef) {
+	my ($lookup_handler, $err);
+	# TODO: try -> catch -> err not DRY, improve
+	try {
+		$lookup_handler = CdrStoreApp::Model::CdrStore::LookupHandler->new(
+			maybe_start_date => $start,
+			maybe_end_date   => $end,
+			call_type_filter => $call_type,
+		);
+	} catch {
+		$err = $_;
+	};
+	if (defined $err) {
+		$err->rethrow() unless $err->{message}->{ierr};
+		return $err->{message};
+	}
+
+	return $self->mariadb->db->query(
+		$lookup_handler->compose_cdr_statement_by_caller_id($caller_id)
+	)->hashes;
+}
+
+# TODO: Copy paste...
+method cdr_by_caller_top ($start, $end, $caller_id, $top_x_queries, $call_type=undef) {
+	my ($lookup_handler, $err);
+	# TODO: try -> catch -> err not DRY, improve
+	try {
+		$lookup_handler = CdrStoreApp::Model::CdrStore::LookupHandler->new(
+			maybe_start_date => $start,
+			maybe_end_date   => $end,
+			call_type_filter => $call_type,
+		);
+	} catch {
+		$err = $_;
+	};
+	if (defined $err) {
+		$err->rethrow() unless $err->{message}->{ierr};
+		return $err->{message};
+	}
 }
 
 fun _delete_empty_fields ($record) {

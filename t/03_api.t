@@ -72,14 +72,21 @@ subtest 'Get CDR by reference' => sub {
 		->json_has('/cdr');
 };
 
-# Well ... let's continue, at least with a regard to spec.yaml :-)
 subtest 'Count CDR records and total duration' => sub {
+	$t->get_ok('/api/count_cdr?start_date=16%2F08%2F2016T11:00:00&end_date=17%2F08%2F2016&call_type=1')
+		->status_is(200)
 };
 
 subtest 'Get CDR for caller_id' => sub {
+	$t->get_ok('/api/cdr_by_caller?start_date=16%2F08%2F2016T11:00:00&end_date=17%2F08%2F2016&call_type=1')
+		->status_is(400)
+		->json_is('/errors/0/path' => '/caller_id');
+
+	$t->get_ok('/api/cdr_by_caller?start_date=16%2F08%2F2016T11:00:00&end_date=17%2F08%2F2016&call_type=1&caller_id=442036000000')
+		->status_is(200)
 };
 
-subtest 'Get CDR for caller_id' => sub {
-};
+#subtest 'Get top X CDR for caller_id' => sub {
+#};
 
 done_testing();

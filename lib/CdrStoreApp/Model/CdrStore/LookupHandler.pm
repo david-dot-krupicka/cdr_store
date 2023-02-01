@@ -9,33 +9,34 @@ use feature 'say';
 
 has maybe_start_date => (is => 'ro', isa => 'Str');
 has maybe_end_date => (is => 'ro', isa => 'Str');
-
 has start_datetime => (is => 'ro', isa => 'Time::Piece', lazy => 1, builder => '_build_start_datetime');
+has end_datetime => (is => 'ro', isa => 'Time::Piece', lazy => 1, builder => '_build_end_datetime');
+has call_type_filter => (is => 'ro', isa => 'Maybe[Int]', default => undef);
+# Define (all) columns as a string, we don't need to manipulate with them (yet)
+has columns => (is => 'ro', isa => 'Str', lazy => 1, builder => '_build_columns');
+
+
+method BUILD ($args) {
+	# TODO: This construct is silly.
+	# TODO: Both dates should be required if caller provides the time range.
+	# TODO: Q/A Is it good idea to gather all queries here? Isn't this package abused a little bit?
+	if ($args->{maybe_start_date} && $args->{maybe_end_date}) {
+		die { ierr => 'start_date_higher_then_end_date' }
+			if $self->start_datetime > $self->end_datetime;
+
+		my $t = Time::Seconds->new($self->end_datetime - $self->start_datetime);
+		die { ierr => 'time_range_exceeds_one_month' }
+			if $t->months > 1;
+	}
+	# TODO: What if only one provided,
+}
+
 method _build_start_datetime () {
 	return _build_date($self->maybe_start_date);
 }
 
-has end_datetime => (is => 'ro', isa => 'Time::Piece', lazy => 1, builder => '_build_end_datetime');
 method _build_end_datetime () {
 	return _build_date($self->maybe_end_date);
-}
-
-has call_type_filter => (is => 'ro', isa => 'Maybe[Int]', default => undef);
-
-# Define (all) columns as a string, we don't need to manipulate with them
-has columns => (is => 'ro', isa => 'Str', lazy => 1, builder => '_build_columns');
-method _build_columns () {
-	return join(',',
-		"c.msisdn AS caller_id",
-		"r.msisdn AS recipient",
-		"DATE_FORMAT(call_datetime, '%d/%m/%Y') AS call_date",
-		"DATE_FORMAT(call_datetime, '%H:%i:%S') AS end_time",
-		"duration",
-		"cost",
-		"reference",
-		"currency",
-		"type",
-	);
 }
 
 fun _build_date ($maybe_date) {
@@ -54,23 +55,27 @@ fun _build_date ($maybe_date) {
 
 	if (defined $err) {
 		$err->rethrow() unless $err->{message} =~ /^Error parsing time/;
-		# TODO: we should die here
+		# TODO: better die here?
 		return { ierr => 'failed_to_parse_date' }
 	}
 
 	return $date;
 }
 
-method BUILD ($args) {
-	if ($args->{maybe_start_date}) {
-		die { ierr => 'start_date_higher_then_end_date' }
-			if $self->start_datetime > $self->end_datetime;
-
-		my $t = Time::Seconds->new($self->end_datetime - $self->start_datetime);
-		die { ierr => 'time_range_exceeds_one_month' }
-			if $t->months > 1;
-	}
+method _build_columns () {
+	return join(',',
+		"c.msisdn AS caller_id",
+		"r.msisdn AS recipient",
+		"DATE_FORMAT(call_datetime, '%d/%m/%Y') AS call_date",
+		"DATE_FORMAT(call_datetime, '%H:%i:%S') AS end_time",
+		"duration",
+		"cost",
+		"reference",
+		"currency",
+		"type",
+	);
 }
+
 
 method compose_all_columns_select () {
 	my $statement = <<"	SQL";
@@ -87,12 +92,18 @@ method compose_cdr_statement ($reference) {
 	return $statement, $reference;
 }
 
-method compose_invalid_cdr_statement ($reference) {
-	my $statement = <<"	SQL";
-SELECT id, record FROM invalid_call_records
-WHERE record LIKE ?
-	SQL
-	return $statement, "%$reference%";
+method compose_cdr_statement_by_caller_id ($caller_id) {
+	my $type_filter = $self->call_type_filter ? ' AND type = ?' : '';
+
+	my $statement = $self->compose_all_columns_select .
+		' WHERE c.msisdn = ?' . $type_filter;
+
+	my @binds = (
+		$caller_id,
+	);
+	push @binds, $self->call_type_filter if $self->call_type_filter;
+
+	return $statement, @binds;
 }
 
 method compose_count_cdr_statement () {
@@ -111,6 +122,14 @@ WHERE call_datetime BETWEEN ? AND ? ${type_filter}
 	push @binds, $self->call_type_filter if $self->call_type_filter;
 
 	return $statement, @binds;
+}
+
+method compose_invalid_cdr_statement ($reference) {
+	my $statement = <<"	SQL";
+SELECT id, record FROM invalid_call_records
+WHERE record LIKE ?
+	SQL
+	return $statement, "%$reference%";
 }
 
 1;

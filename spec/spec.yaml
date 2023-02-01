@@ -117,7 +117,7 @@ paths:
       operationId: cdrByCallerTop
       x-mojo-name: cdr_by_caller_top
       x-mojo-to: CdrStore#cdr_by_caller_top
-      summary: Get all CDR's in given time range, for given caller, up to 1 month
+      summary: Top X most expensive calls in given time range, for given caller, up to 1 month
       parameters:
         - name: start_date
           description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
