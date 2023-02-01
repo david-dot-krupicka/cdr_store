@@ -29,16 +29,15 @@ sub get_cdr ($c) {
 sub count_cdr ($c) {
 	$c->openapi->valid_input or return;
 
+	# TODO: It's obvious how this builds up, think about it, though here we return different structure
 	my $action = 'count_cdr';
 	my $data = $c->cdrstore->count_cdr(
 		$c->param('start_date'),
 		$c->param('end_date'),
-		$c->param('call_type')
+		$c->param('call_type'),
 	);
 
 	if ($data->{ierr}) {
-		use Data::Dumper;
-		say Dumper $data;
 		return $c->render(openapi => {
 			_render_for_all($action, 400),
 			%$data
@@ -54,21 +53,36 @@ sub count_cdr ($c) {
 sub cdr_by_caller ($c) {
 	$c->openapi->valid_input or return;
 
+	# TODO: It's obvious how this builds up, think about it
 	my $action = 'cdr_by_caller';
-	use Data::Dumper;
-	say Dumper $c->param;
+	my $data = $c->cdrstore->cdr_by_caller(
+		$c->param('start_date'),
+		$c->param('end_date'),
+		$c->param('caller_id'),
+		$c->param('call_type'),
+	);
 
-	$c->render(json => { status => 200 });
+	use Data::Dumper;
+	say Dumper $data;
+	$c->render(json => { data => $data, status => 200 });
 };
 
 sub cdr_by_caller_top ($c) {
 	$c->openapi->valid_input or return;
 
+	# TODO: It's obvious how this builds up, think about it
 	my $action = 'cdr_by_caller_top';
-	use Data::Dumper;
-	say Dumper $c->param;
+	my $data = $c->cdrstore->cdr_by_caller_top(
+		$c->param('start_date'),
+		$c->param('end_date'),
+		$c->param('caller_id'),
+		$c->param('top_x_queries'),
+		$c->param('call_type'),
+	);
 
-	$c->render(json => { status => 200 });
+	use Data::Dumper;
+	say Dumper $data;
+	$c->render(json => { data => $data, status => 200 });
 };
 
 sub _render_for_all ($action, $status) {
