@@ -1,5 +1,8 @@
 # cdr_store
 
+## API Documentation
+[ReDoc documentation](index.html)
+
 ## Initial setup
 
 ### MariaDB in rancher

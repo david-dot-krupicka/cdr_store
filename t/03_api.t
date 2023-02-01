@@ -16,12 +16,42 @@ my $t = Test::Mojo->new(
 	}
 );
 
-subtest 'Get CDR by reference' => sub {
+subtest 'Test missing properties' => sub {
 	$t->get_ok('/api/get_cdr')
 		->status_is(400)
 		->json_is('/errors/0/message' => 'Missing property.')
 		->json_is('/errors/0/path' => '/reference');
 
+
+	$t->get_ok('/api/count_cdr')
+		->status_is(400)
+		->json_is('/errors/0/message' => 'Missing property.')
+		->json_is('/errors/0/path' => '/start_date')
+		->json_is('/errors/1/message' => 'Missing property.')
+		->json_is('/errors/1/path' => '/end_date');
+
+	$t->get_ok('/api/cdr_by_caller')
+		->status_is(400)
+		->json_is('/errors/0/message' => 'Missing property.')
+		->json_is('/errors/0/path' => '/start_date')
+		->json_is('/errors/1/message' => 'Missing property.')
+		->json_is('/errors/1/path' => '/end_date')
+		->json_is('/errors/2/message' => 'Missing property.')
+		->json_is('/errors/2/path' => '/caller_id');
+
+	$t->get_ok('/api/cdr_by_caller/top')
+		->status_is(400)
+		->json_is('/errors/0/message' => 'Missing property.')
+		->json_is('/errors/0/path' => '/start_date')
+		->json_is('/errors/1/message' => 'Missing property.')
+		->json_is('/errors/1/path' => '/end_date')
+		->json_is('/errors/2/message' => 'Missing property.')
+		->json_is('/errors/2/path' => '/caller_id')
+		->json_is('/errors/3/message' => 'Missing property.')
+		->json_is('/errors/3/path' => '/top_x_queries');
+};
+
+subtest 'Get CDR by reference' => sub {
 	$t->get_ok('/api/get_cdr?reference=pansky')
 		->status_is(404)
 		->json_is('/action' => 'get_cdr')
@@ -42,46 +72,14 @@ subtest 'Get CDR by reference' => sub {
 		->json_has('/cdr');
 };
 
-# TODO MAYBE, just my thoughts after hard work day
-# TODO or NOT TODO ... With these test we don't need manual checking,
-# TODO or NOT TODO ... with OpenAPI the structure is validated, so don't go too deep into the structure
-
-# TODO    ... rather check status, valid values (action, ierr)
-
-# TODO On the other hand why not to be strict, if there is time
-
 # Well ... let's continue, at least with a regard to spec.yaml :-)
 subtest 'Count CDR records and total duration' => sub {
-	$t->get_ok('/api/count_cdr')
-		->status_is(400)
-		->json_is('/errors/0/message' => 'Missing property.')
-		->json_is('/errors/0/path' => '/start_date')
-		->json_is('/errors/1/message' => 'Missing property.')
-		->json_is('/errors/1/path' => '/end_date');
 };
 
 subtest 'Get CDR for caller_id' => sub {
-	$t->get_ok('/api/cdr_by_caller')
-		->status_is(400)
-		->json_is('/errors/0/message' => 'Missing property.')
-		->json_is('/errors/0/path' => '/start_date')
-		->json_is('/errors/1/message' => 'Missing property.')
-		->json_is('/errors/1/path' => '/end_date')
-		->json_is('/errors/2/message' => 'Missing property.')
-		->json_is('/errors/2/path' => '/caller_id');
 };
 
 subtest 'Get CDR for caller_id' => sub {
-	$t->get_ok('/api/cdr_by_caller/top')
-		->status_is(400)
-		->json_is('/errors/0/message' => 'Missing property.')
-		->json_is('/errors/0/path' => '/start_date')
-		->json_is('/errors/1/message' => 'Missing property.')
-		->json_is('/errors/1/path' => '/end_date')
-		->json_is('/errors/2/message' => 'Missing property.')
-		->json_is('/errors/2/path' => '/caller_id')
-		->json_is('/errors/3/message' => 'Missing property.')
-		->json_is('/errors/3/path' => '/top_x_queries')
 };
 
 done_testing();
