@@ -54,6 +54,7 @@ fun _build_date ($maybe_date) {
 
 	if (defined $err) {
 		$err->rethrow() unless $err->{message} =~ /^Error parsing time/;
+		# TODO: we should die here
 		return { ierr => 'failed_to_parse_date' }
 	}
 

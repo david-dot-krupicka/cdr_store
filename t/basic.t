@@ -6,6 +6,7 @@ use Test::Mojo;
 use File::Temp qw(tempfile);
 use Mojo::File qw(curfile);
 use CdrStoreApp::Model::CdrStore::CdrRecord;
+use CdrStoreApp::Model::CdrStore::LookupHandler;
 
 
 my $t = Test::Mojo->new(
@@ -90,7 +91,10 @@ subtest 'Test CSV upload' => sub {
 	ok( $t->app->commands->run('upload', $csvfile) eq 1, 'upload looks ok' );
 
 	my $class = 'Mojo::Collection';
-	my $calls_result = $t->app->cdrstore->select_all_records;
+	my $lookup_handler = CdrStoreApp::Model::CdrStore::LookupHandler->new();
+	my $calls_result = $t->app->mariadb->db->query(
+		$lookup_handler->compose_all_columns_select
+	)->hashes;
 	isa_ok($calls_result, $class);
 	my $expected_records = $class->new(
 		{

@@ -13,6 +13,7 @@ use feature 'say';
 
 has mariadb => (is => 'ro', isa => 'Mojo::mysql', required => 1);
 
+# TODO: Although it works, refactor
 method insert_cdr_records ($columns, $records) {
 	eval {
 		my $db = $self->mariadb->db;
@@ -41,6 +42,8 @@ method insert_cdr_records ($columns, $records) {
 					# Attribute (duration) does not pass the type constraint because: Validation failed for 'Int' with value IamString
 				} elsif ($_->message =~ /Attribute \((\w+)\).*Validation failed for '([^']+)' with value (\S+)/) {
 					carp "WARN: $action_message, Validation of '$1' attribute failed, it is not $2, but $3...";
+				} elsif ($_->message =~ /Error parsing time/) {
+					carp "WARN: $action_message, Date validation failed";
 				} else {
 					$_->rethrow();
 				}
