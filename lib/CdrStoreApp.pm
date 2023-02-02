@@ -14,6 +14,9 @@ has mariadb => sub {
 };
 
 method startup() {
+	# Not sure if this is the best setting...
+	$self->max_request_size(1073741824);
+
 	$self->moniker('cdrstoreapp');
 	$self->plugin('Config');
 
@@ -28,7 +31,7 @@ method startup() {
 	});
 
 	# API
-	$self->plugin("OpenAPI" => {url => $self->home->rel_file("spec/spec.yaml")});
+	$self->plugin("OpenAPI" => {url => $self->home->rel_file("spec/swagger.yaml")});
 }
 
 method destroy() {
@@ -40,6 +43,7 @@ method destroy() {
 
 1;
 
+### <a name="db_schema"></a>
 __DATA__
 
 @@ migrations

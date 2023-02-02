@@ -1,8 +1,8 @@
 package CdrStoreApp::Controller::CdrStore;
-use Mojo::Base 'Mojolicious::Controller', -signatures;
+use Mojo::Base 'Mojolicious::Controller';
 
-
-sub get_cdr ($c) {
+sub get_one_cdr {
+	my ($c) = @_;
 	$c->openapi->valid_input or return;
 
 	my $action = 'get_cdr';
@@ -24,72 +24,40 @@ sub get_cdr ($c) {
 		_render_for_all($action, 200),
 		cdr => $data,
 	}, status => 200)
-};
+}
 
-sub count_cdr ($c) {
+sub get_cdr_count_or_list {
+	my ($c) = @_;
 	$c->openapi->valid_input or return;
 
-	# TODO: It's obvious how this builds up, think about it, though here we return different structure
-	my $action = 'count_cdr';
-	my $data = $c->cdrstore->count_cdr(
+	my $action = $c->param('caller_id') ? 'get_cdr_list' : 'get_cdr_count';
+	my $data = $c->cdrstore->get_cdr_count_or_list(
 		$c->param('start_date'),
 		$c->param('end_date'),
 		$c->param('call_type'),
+		$c->param('caller_id'),
+		$c->param('top_x_calls'),
 	);
 
-	if ($data->{ierr}) {
+	if (ref $data eq 'HASH' &&  $data->{ierr}) {
 		return $c->render(openapi => {
 			_render_for_all($action, 400),
 			%$data
 		}, status => 400)
 	}
 
-	$c->render(openapi => {
+	$c->render(json => {
 		_render_for_all($action, 200),
-		%$data
+		(ref $data eq 'HASH' ? %$data : (records => $data))
 	}, status => 200 );
-};
+}
 
-sub cdr_by_caller ($c) {
-	$c->openapi->valid_input or return;
-
-	# TODO: It's obvious how this builds up, think about it
-	my $action = 'cdr_by_caller';
-	my $data = $c->cdrstore->cdr_by_caller(
-		$c->param('start_date'),
-		$c->param('end_date'),
-		$c->param('caller_id'),
-		$c->param('call_type'),
-	);
-
-	use Data::Dumper;
-	say Dumper $data;
-	$c->render(json => { data => $data, status => 200 });
-};
-
-sub cdr_by_caller_top ($c) {
-	$c->openapi->valid_input or return;
-
-	# TODO: It's obvious how this builds up, think about it
-	my $action = 'cdr_by_caller_top';
-	my $data = $c->cdrstore->cdr_by_caller_top(
-		$c->param('start_date'),
-		$c->param('end_date'),
-		$c->param('caller_id'),
-		$c->param('top_x_queries'),
-		$c->param('call_type'),
-	);
-
-	use Data::Dumper;
-	say Dumper $data;
-	$c->render(json => { data => $data, status => 200 });
-};
-
-sub _render_for_all ($action, $status) {
+sub _render_for_all {
+	my ($action, $status) = @_;
 	return my %v = (
 		action => $action,
 		status => $status,
 	);
-};
+}
 
 1;

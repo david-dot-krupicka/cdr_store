@@ -50,8 +50,7 @@ method run ($filename) {
 		say sprintf($user_message_template, scalar @records);
 		$self->app->cdrstore->insert_cdr_records(\@columns, \@records);
 	}
-
-	return 1;
+	return 0;
 }
 
 __PACKAGE__->meta()->make_immutable();

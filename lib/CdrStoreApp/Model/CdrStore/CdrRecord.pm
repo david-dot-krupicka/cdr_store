@@ -1,11 +1,9 @@
 package CdrStoreApp::Model::CdrStore::CdrRecord;
 use Moose;
 use CdrStoreApp::Model::CdrStore::CdrRecordTypes;
+use Exception::Class::Try::Catch;
 use Function::Parameters;
 use Time::Piece;
-
-# TODO: remove say where it's not needed, like here
-use feature 'say';
 
 # Implements only very basic type checking
 has call_date => (is => 'ro', isa => 'Str', required => 1);
@@ -28,6 +26,8 @@ method _build_call_datetime () {
 	return Time::Piece->strptime($maybe_datetime, '%d/%m/%Y %H:%M:%S');
 }
 
+# TODO: Could at first check if it's not already in db, at least
+
 method insert_record () {
 	my $caller_id = $self->_insert_msisdn_into_table(
 		'customers',
@@ -40,16 +40,16 @@ method insert_record () {
 
 	$self->db->insert(
 		'call_records',
-			{
-				reference     => $self->reference,
-				caller_id     => $caller_id,
-				recipient     => $recipient_id,
-				call_datetime => $self->call_datetime->strftime('%Y-%m-%d %H:%M:%S'),
-				duration      => $self->duration,
-				cost          => $self->cost,
-				currency      => $self->currency,
-				type          => $self->type,
-			}
+		{
+			reference     => $self->reference,
+			caller_id     => $caller_id,
+			recipient     => $recipient_id,
+			call_datetime => $self->call_datetime->strftime('%Y-%m-%d %H:%M:%S'),
+			duration      => $self->duration,
+			cost          => $self->cost,
+			currency      => $self->currency,
+			type          => $self->type,
+		}
 	);
 }
 

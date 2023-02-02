@@ -5,8 +5,6 @@ use Function::Parameters;
 use Time::Piece;
 use Time::Seconds;
 
-use feature 'say';
-
 has maybe_start_date => (is => 'ro', isa => 'Str');
 has maybe_end_date => (is => 'ro', isa => 'Str');
 has start_datetime => (is => 'ro', isa => 'Time::Piece', lazy => 1, builder => '_build_start_datetime');
@@ -17,9 +15,7 @@ has columns => (is => 'ro', isa => 'Str', lazy => 1, builder => '_build_columns'
 
 
 method BUILD ($args) {
-	# TODO: This construct is silly.
-	# TODO: Both dates should be required if caller provides the time range.
-	# TODO: Q/A Is it good idea to gather all queries here? Isn't this package abused a little bit?
+	# Missing date will be catched by OpenAPI spec
 	if ($args->{maybe_start_date} && $args->{maybe_end_date}) {
 		die { ierr => 'start_date_higher_then_end_date' }
 			if $self->start_datetime > $self->end_datetime;
@@ -28,7 +24,6 @@ method BUILD ($args) {
 		die { ierr => 'time_range_exceeds_one_month' }
 			if $t->months > 1;
 	}
-	# TODO: What if only one provided,
 }
 
 method _build_start_datetime () {
@@ -55,7 +50,6 @@ fun _build_date ($maybe_date) {
 
 	if (defined $err) {
 		$err->rethrow() unless $err->{message} =~ /^Error parsing time/;
-		# TODO: better die here?
 		return { ierr => 'failed_to_parse_date' }
 	}
 
@@ -76,7 +70,6 @@ method _build_columns () {
 	);
 }
 
-
 method compose_all_columns_select () {
 	my $statement = <<"	SQL";
 SELECT %s FROM call_records cdr
@@ -92,18 +85,12 @@ method compose_cdr_statement ($reference) {
 	return $statement, $reference;
 }
 
-method compose_cdr_statement_by_caller_id ($caller_id) {
-	my $type_filter = $self->call_type_filter ? ' AND type = ?' : '';
-
-	my $statement = $self->compose_all_columns_select .
-		' WHERE c.msisdn = ?' . $type_filter;
-
-	my @binds = (
-		$caller_id,
-	);
-	push @binds, $self->call_type_filter if $self->call_type_filter;
-
-	return $statement, @binds;
+method compose_invalid_cdr_statement ($reference) {
+	my $statement = <<"	SQL";
+SELECT id, record FROM invalid_call_records
+WHERE record LIKE ?
+	SQL
+	return $statement, "%$reference%";
 }
 
 method compose_count_cdr_statement () {
@@ -124,12 +111,20 @@ WHERE call_datetime BETWEEN ? AND ? ${type_filter}
 	return $statement, @binds;
 }
 
-method compose_invalid_cdr_statement ($reference) {
-	my $statement = <<"	SQL";
-SELECT id, record FROM invalid_call_records
-WHERE record LIKE ?
-	SQL
-	return $statement, "%$reference%";
+method compose_cdr_statement_by_caller_id ($caller_id, $top_x_calls=undef) {
+	my $type_filter = $self->call_type_filter ? ' AND type = ?' : '';
+	my $top = $top_x_calls ? ' ORDER BY cost DESC LIMIT ?' : '';
+
+	my $statement = $self->compose_all_columns_select .
+		' WHERE c.msisdn = ?' . $type_filter . $top;
+
+	my @binds = (
+		$caller_id,
+	);
+	push @binds, $self->call_type_filter if $self->call_type_filter;
+	push @binds, $top_x_calls if $top_x_calls;
+
+	return $statement, @binds;
 }
 
 1;

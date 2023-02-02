@@ -1,10 +1,10 @@
 # cdr_store
 
 ## API Documentation
-#### [Online ReDoc documentation](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/david-dot-krupicka/cdr_store/develop/spec/spec.yaml)
+#### [Online ReDoc documentation](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/david-dot-krupicka/cdr_store/develop/spec/swagger.yaml)
 #### [Local ReDoc documentation](index.html)
 
-## Initial setup
+## Setup
 
 ### MariaDB in rancher
 <i>Note: PostgreSQL would be better choice, probably much faster</i>
@@ -28,17 +28,18 @@ EXIT;
 ```bash
 brew install openssl mysql-connector-c
 cpan install DBD::MariaDB
+cpan install Exception::Class::Try::Catch
+cpan install Function::Parameters
 cpan install Mojo::mysql
 cpan install Mojolicious::Plugin::OpenAPI
-cpan install Function::Parameters
+cpan install Moose
+cpan install MooseX::NonMoose
 cpan install Text::CSV_XS
-cpan install Exception::Class::Try::Catch
-cpan install Moose MooseX::NonMoose
 cpan install Time::Piece
 ```
 
 ### DB Schema
-  .... create a link here
+See [this link](#db_schema), current schema version is 3.
 
 Created or updated with `bin/cdrstore.pl deploy`
 
@@ -47,4 +48,4 @@ demonstrate a possible DB model, following a simple rule - if there are
 repeated records, store them in related table.
 
 ## Testing
-`prove -I./lib -v t/basic.t` in applications home.
+`prove -I./lib -v` in applications home.

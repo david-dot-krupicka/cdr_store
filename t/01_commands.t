@@ -88,7 +88,7 @@ subtest 'Test CSV upload' => sub {
 
 	my $csvfile = _generate_content();
 
-	ok( $t->app->commands->run('upload', $csvfile) eq 1, 'upload looks ok' );
+	ok( $t->app->commands->run('upload', $csvfile) eq 0, 'upload looks ok' );
 
 	my $class = 'Mojo::Collection';
 	my $lookup_handler = CdrStoreApp::Model::CdrStore::LookupHandler->new();
