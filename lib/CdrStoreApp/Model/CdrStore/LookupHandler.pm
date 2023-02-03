@@ -43,14 +43,16 @@ fun _build_date ($maybe_date) {
 			$date = Time::Piece->strptime($maybe_date, '%d/%m/%Y');
 		} elsif ($maybe_date =~ m|^\d{2}/\d{2}/\d{4}T\d{2}:\d{2}:\d{2}$|) {
 			$date = Time::Piece->strptime($maybe_date, '%d/%m/%YT%H:%M:%S');
+		} else {
+			die 'Format of date does not match';
 		};
 	} catch {
 		$err = $_;
 	};
 
 	if (defined $err) {
-		$err->rethrow() unless $err->{message} =~ /^Error parsing time/;
-		return { ierr => 'failed_to_parse_date' }
+		$err->rethrow() unless $err->{message} =~ /^Format of date|^Error parsing time/;
+		die { ierr => 'failed_to_parse_date', message => chomp $err->{message} }
 	}
 
 	return $date;

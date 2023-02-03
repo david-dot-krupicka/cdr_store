@@ -30,8 +30,11 @@ sub get_cdr_count_or_list {
 	my ($c) = @_;
 	$c->openapi->valid_input or return;
 
-	my $action = $c->param('caller_id') ? 'get_cdr_list' : 'get_cdr_count';
+	# TODO: This is silly
+	my $path = $c->req->url->path->to_string;
+	my $action = ($path =~ /count_cdr/ ? 'get_cdr_count' : 'get_cdr_list');
 	my $data = $c->cdrstore->get_cdr_count_or_list(
+		$action,
 		$c->param('start_date'),
 		$c->param('end_date'),
 		$c->param('call_type'),
@@ -39,17 +42,29 @@ sub get_cdr_count_or_list {
 		$c->param('top_x_calls'),
 	);
 
-	if (ref $data eq 'HASH' &&  $data->{ierr}) {
+	if (ref $data eq 'HASH' && $data->{ierr}) {
 		return $c->render(openapi => {
 			_render_for_all($action, 400),
 			%$data
 		}, status => 400)
 	}
 
-	$c->render(json => {
-		_render_for_all($action, 200),
-		(ref $data eq 'HASH' ? %$data : (records => $data))
-	}, status => 200 );
+	my $status = 200;
+	if ($action eq 'get_cdr_list' && scalar @$data == 0) {
+		$status = 404;
+		return $c->render(openapi => {
+			_render_for_all($action, $status),
+			ierr    => 'not_found',
+			records => $data
+		}, status => $status);
+	}
+	$c->render(openapi => {
+		_render_for_all($action, $status),
+		($action eq 'get_cdr_list'
+			? (caller_id => $c->param('caller_id'), records => $data)
+			: %$data
+		)
+	}, status => $status );
 }
 
 sub _render_for_all {
@@ -61,3 +76,4 @@ sub _render_for_all {
 }
 
 1;
+

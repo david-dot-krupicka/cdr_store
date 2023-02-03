@@ -1,6 +1,6 @@
 swagger: "2.0"
 info:
-    version: 1.0
+    version: "1.0"
     title: CDR Store API
 basePath: /api
 tags:
@@ -109,10 +109,6 @@ paths:
           description: custom error response
           schema:
             $ref: "#/definitions/ErrorModel"
-        default:
-          description: error response
-          schema:
-            $ref: "#/definitions/ErrorModel"
   /cdr_by_caller:
     get:
       operationId: cdrByCaller
@@ -147,10 +143,14 @@ paths:
           description: Returns list of CDR objects matching criteria.
           schema:
             $ref: "#/definitions/SuccessCdrList"
-        #default:
-        #  description: error response
-        #  schema:
-        #    $ref: "#/definitions/ErrorModel"
+        400:
+          description: custom error response
+          schema:
+            $ref: "#/definitions/ErrorModel"
+        404:
+          description: No records found
+          schema:
+            $ref: "#/definitions/ErrorModel"
 definitions:
   SuccessCdrResponse:
     type: object

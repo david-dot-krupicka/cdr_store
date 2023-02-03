@@ -84,6 +84,7 @@ method select_cdr_by_reference ($reference) {
 }
 
 method get_cdr_count_or_list (
+		$action,
 		$start,
 		$end,
 		$call_type = undef,
@@ -106,7 +107,7 @@ method get_cdr_count_or_list (
 	}
 
 	my $result;
-	if (defined $caller_id) {
+	if ($action eq 'get_cdr_list') {
 		$result = $self->mariadb->db->query(
 			$lookup_handler->compose_cdr_statement_by_caller_id($caller_id, $top_x_calls)
 		)->hashes;
