@@ -26,9 +26,17 @@ method _build_call_datetime () {
 	return Time::Piece->strptime($maybe_datetime, '%d/%m/%Y %H:%M:%S');
 }
 
-# TODO: Could at first check if it's not already in db, at least
+# Let's have at least some check...
+method check_record_pk () {
+	return $self->db->query(
+		"SELECT EXISTS(SELECT reference FROM call_records WHERE reference=?)",
+		$self->reference
+	);
+}
 
 method insert_record () {
+	die { ierr => 'record_exists' } if $self->check_record_pk;
+
 	my $caller_id = $self->_insert_msisdn_into_table(
 		'customers',
 		$self->caller_id,
@@ -62,4 +70,5 @@ method _insert_msisdn_into_table ($table, $msisdn) {
 	return $id;
 }
 
+__PACKAGE__->meta()->make_immutable();
 1;

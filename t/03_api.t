@@ -73,43 +73,36 @@ subtest 'Get CDR by reference' => sub {
 subtest 'Count CDR records and total duration' => sub {
 	$t->get_ok('/api/count_cdr?start_date=16%2F08%2F2016T11:00:00&end_date=17%2F08%2F2016&call_type=1')
 		->status_is(200)
-		->json_is('/action' => 'get_cdr_count')
-		->json_is('/status' => 200)
 		->json_is('/cdr_count' => 1, 'has cdr_count 1')
 		->json_is('/total_call_duration' => '00:06:13', 'has correct total_call_duration 00:06:13');
 
 	$t->get_ok('/api/count_cdr?start_date=2018%2F08%2F20T11:00:00&end_date=17%2F08%2F2016&call_type=1')
 		->status_is(400)
-		->json_is('/action' => 'get_cdr_count', 'has action get_cdr_count')
-		->json_is('/status' => 400, 'has status 400')
 		->json_is('/ierr' => 'failed_to_parse_date', 'has ierr failed_to_parse_date');
 
 	$t->get_ok('/api/count_cdr?start_date=16%2F08%2F2010T11:00:00&end_date=17%2F08%2F2016&call_type=1')
 		->status_is(400)
-		->json_is('/action' => 'get_cdr_count', 'has action get_cdr_count')
-		->json_is('/status' => 400, 'has status 400')
 		->json_is('/ierr' => 'time_range_exceeds_one_month', 'has ierr time_range_exceeds_one_month');
 
 	$t->get_ok('/api/count_cdr?start_date=16%2F08%2F2020T11:00:00&end_date=17%2F08%2F2016&call_type=1')
 		->status_is(400)
-		->json_is('/action' => 'get_cdr_count', 'has action get_cdr_count')
-		->json_is('/status' => 400, 'has status 400')
 		->json_is('/ierr' => 'start_date_higher_then_end_date', 'has ierr start_date_higher_then_end_date');
 
 	# Test we get the correct result also if caller_id is specified
 	$t->get_ok('/api/count_cdr?start_date=16%2F08%2F2016T11:00:00&end_date=20%2F08%2F2016&call_type=1&caller_id=447497000000')
 		->status_is(200)
-		->json_is('/action' => 'get_cdr_count')
-		->json_is('/status' => 200)
 		->json_is('/cdr_count' => 2, 'has cdr_count 2')
 		->json_is('/total_call_duration' => '00:21:19', 'has correct total_call_duration 00:21:19');
+
+	# Test 0 records found
+	$t->get_ok('/api/count_cdr?start_date=01%2F01%2F1970T00:00:00&end_date=30%2F01%2F1970')
+		->status_is(404)	# should be not found
 };
 
 subtest 'Get CDR for caller_id' => sub {
 	# 447497000000,447909000000,18/08/2016,16:30:01,306,0.044,reference7,GBP,2
 	$t->get_ok('/api/cdr_by_caller?start_date=16%2F08%2F2016T11:00:00&end_date=19%2F08%2F2016&caller_id=447497000000')
 		->status_is(200)
-		->json_is('/action' => 'get_cdr_list')
 		->json_is('/caller_id' => 447497000000)
 		->json_has('/records')
 		->json_is('/records/0/reference' => 'reference10')
@@ -119,6 +112,10 @@ subtest 'Get CDR for caller_id' => sub {
 	$t->get_ok('/api/cdr_by_caller?start_date=16%2F08%2F2016T11:00:00&end_date=17%2F08%2F2016&call_type=1')
 		->status_is(400)
 		->json_is('/errors/0/path' => '/caller_id');
+
+	$t->get_ok('/api/cdr_by_caller?start_date=16%2F08%2F2016T11:00:00&end_date=19%2F08%2F2016&caller_id=4474971234546')
+		->status_is(404)
+		->json_is('/ierr' => 'not_found');
 };
 
 subtest 'Get top X CDR for caller_id' => sub {
@@ -131,6 +128,14 @@ subtest 'Get top X CDR for caller_id' => sub {
 		->json_is('/records/0/cost' => 0.8)
 		->json_is('/records/1/cost' => 0.6)
 		->json_is('/records/2/cost' => 0.12);
+
+	$t->get_ok('/api/cdr_by_caller?start_date=16%2F08%2F2016T11:00:00&end_date=17%2F13%2F2016&call_type=2&caller_id=447497000000&top_x_calls=3&call_type=2')
+		->status_is(400)
+		->json_is('/ierr' => 'failed_to_parse_date');
+
+	$t->get_ok('/api/cdr_by_caller?start_date=16%2F08%2F2016T11:00:00&end_date=19%2F08%2F2016&caller_id=4474971234546&top_x_calls=3')
+		->status_is(404)
+		->json_is('/ierr' => 'not_found');
 };
 
 done_testing();

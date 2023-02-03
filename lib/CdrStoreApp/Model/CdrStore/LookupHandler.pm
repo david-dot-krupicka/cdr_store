@@ -10,7 +10,6 @@ has maybe_end_date => (is => 'ro', isa => 'Str');
 has start_datetime => (is => 'ro', isa => 'Time::Piece', lazy => 1, builder => '_build_start_datetime');
 has end_datetime => (is => 'ro', isa => 'Time::Piece', lazy => 1, builder => '_build_end_datetime');
 has call_type_filter => (is => 'ro', isa => 'Maybe[Int]', default => undef);
-# Define (all) columns as a string, we don't need to manipulate with them (yet)
 has columns => (is => 'ro', isa => 'Str', lazy => 1, builder => '_build_columns');
 
 
@@ -129,4 +128,5 @@ method compose_cdr_statement_by_caller_id ($caller_id, $top_x_calls=undef) {
 	return $statement, @binds;
 }
 
+__PACKAGE__->meta()->make_immutable();
 1;

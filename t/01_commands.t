@@ -202,6 +202,9 @@ subtest 'Test CSV upload' => sub {
 		},
 	);
 	is_deeply($invalid_calls_result, $expected_invalid_records, 'invalid records uploaded');
+
+	# Test same file upload again
+	dies_ok { $t->app->commands->run('upload', $csvfile ) } qr/whatever/;
 };
 
 done_testing();

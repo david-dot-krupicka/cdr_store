@@ -35,12 +35,14 @@ method run ($filename) {
 	my @records;
 	my $user_message_template = 'Trying to insert %d records to database...';
 
+	my $err;
 	while (my $row = $csv->getline($fh)) {
 		push @records, $row;
 
 		if (scalar @records % $self->batch_size == 0) {
 			say sprintf($user_message_template, scalar @records);
-			$self->app->cdrstore->insert_cdr_records(\@columns, \@records);
+			$err = $self->app->cdrstore->insert_cdr_records(\@columns, \@records);
+			die $err->{ierr} if $err->{ierr};
 			@records = ();
 		}
 	}

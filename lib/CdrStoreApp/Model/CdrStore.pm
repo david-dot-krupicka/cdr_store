@@ -9,6 +9,9 @@ use MooseX::NonMoose;
 use CdrStoreApp::Model::CdrStore::CdrRecord;
 use CdrStoreApp::Model::CdrStore::LookupHandler;
 
+use CdrStoreApp::Model::CdrStore::CdrSelect::SelectCount;
+use CdrStoreApp::Model::CdrStore::CdrSelect::SelectList;
+
 has mariadb => (is => 'ro', isa => 'Mojo::mysql', required => 1);
 
 # TODO: Although it works, should be refactored
@@ -22,16 +25,17 @@ method insert_cdr_records ($columns, $records) {
 			# Delete empty fields to ensure we won't insert empty strings
 			_delete_empty_fields(\%cdr_record_hash);
 
-			my $cdr_record;
+			my ($cdr_record, $err);
 			try {
 				$cdr_record = CdrStoreApp::Model::CdrStore::CdrRecord->new(
 					db => $db,
 					%cdr_record_hash
 				);
-				# TODO: error checking is not good here :-(
-				$cdr_record->insert_record;
 			}
 			catch {
+				$err = $_->message; # TODO
+				use Data::Dumper;
+				say Dumper $err;
 				# If any exception occurs, store the record as invalid
 				my $action_message = 'inserting into invalid_call_records';
 
@@ -55,6 +59,15 @@ method insert_cdr_records ($columns, $records) {
 					{ record => join(',', @$record) }
 				);
 			};
+			$err = undef;
+			try {
+				# At least some check to prevent inserting already existing entries
+				$cdr_record->insert_record;
+			} catch {
+				$err = $_->{message};
+				$err->rethrow() unless $err->{ierr};
+			};
+			return { error => $err->{ierr} } if $err->{ierr};
 		}
 		$tx->commit;
 	};
@@ -83,40 +96,48 @@ method select_cdr_by_reference ($reference) {
 	return { ierr => 'not_found' }
 }
 
-method get_cdr_count_or_list (
-		$action,
-		$start,
-		$end,
-		$call_type = undef,
-		$caller_id = undef,
-		$top_x_calls = undef,
-	) {
-	my ($lookup_handler, $err);
-	try {
-		$lookup_handler = CdrStoreApp::Model::CdrStore::LookupHandler->new(
-			maybe_start_date => $start,
-			maybe_end_date   => $end,
-			call_type_filter => $call_type,
-		);
+method get_cdr_count (
+	$start,
+	$end,
+	$call_type = undef
+) {
+	my $data;
+	$data = try {
+		CdrStoreApp::Model::CdrStore::CdrSelect::SelectCount->new(
+			call_type  => $call_type,
+			db         => $self->mariadb->db,
+			end_date   => $end,
+			start_date => $start,
+		)->select;
 	} catch {
-		$err = $_;
+		die $_->message;
 	};
-	if (defined $err) {
-		$err->rethrow() unless $err->{message}->{ierr};
-		return $err->{message};
-	}
+	die { ierr => 'not_found' } unless $data->{cdr_count};
+	return $data;
+}
 
-	my $result;
-	if ($action eq 'get_cdr_list') {
-		$result = $self->mariadb->db->query(
-			$lookup_handler->compose_cdr_statement_by_caller_id($caller_id, $top_x_calls)
-		)->hashes;
-	} else {
-		$result = $self->mariadb->db->query(
-			$lookup_handler->compose_count_cdr_statement
-		)->hashes->first;
-	}
-	return $result;
+method get_cdr_list (
+	$start,
+	$end,
+	$caller_id,
+	$call_type = undef,
+	$top_calls = undef
+) {
+	my $data;
+	try {
+		$data = CdrStoreApp::Model::CdrStore::CdrSelect::SelectList->new(
+			caller_id             => $caller_id,
+			call_type             => $call_type,
+			db                    => $self->mariadb->db,
+			end_date              => $end,
+			start_date            => $start,
+			top_calls             => $top_calls
+		)->select;
+	} catch {
+		die $_->message;
+	};
+	die { ierr => 'not_found' } unless scalar @{$data};
+	return { caller_id => $caller_id, records => $data };
 }
 
 fun _delete_empty_fields ($record) {

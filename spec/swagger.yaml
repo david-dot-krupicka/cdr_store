@@ -82,7 +82,7 @@ paths:
     get:
       operationId: countCdr
       x-mojo-name: count_cdr
-      x-mojo-to: CdrStore#get_cdr_count_or_list
+      x-mojo-to: CdrStore#get_cdr_count
       summary: Counts all CDRs in given time range, up to 1 month.
       parameters:
         - name: start_date
@@ -109,11 +109,15 @@ paths:
           description: custom error response
           schema:
             $ref: "#/definitions/ErrorModel"
+        404:
+          description: custom error response
+          schema:
+            $ref: "#/definitions/ErrorModel"
   /cdr_by_caller:
     get:
       operationId: cdrByCaller
       x-mojo-name: cdr_by_caller
-      x-mojo-to: CdrStore#get_cdr_count_or_list
+      x-mojo-to: CdrStore#get_cdr_list
       summary: Get all CDR's in given time range, for given caller, up to 1 month.
       parameters:
         - name: start_date
@@ -155,8 +159,6 @@ definitions:
   SuccessCdrResponse:
     type: object
     required:
-      - action
-      - status
       - cdr
     properties:
       action:
@@ -170,8 +172,6 @@ definitions:
   SuccessCdrCount:
     type: object
     required:
-      - action
-      - status
       - cdr_count
       - total_call_duration
     properties:
@@ -189,8 +189,6 @@ definitions:
   SuccessCdrList:
     type: object
     required:
-      - action
-      - status
       - caller_id
       - records
     properties:
@@ -244,8 +242,6 @@ definitions:
   ErrorModel:
     type: object
     required:
-      - action
-      - status
       - ierr
     properties:
       action:
