@@ -1,7 +1,6 @@
 package CdrStoreApp::Controller::CdrStore;
 use Mojo::Base 'Mojolicious::Controller';
 
-use feature 'say';
 
 sub get_one_cdr {
 	my ($c) = @_;

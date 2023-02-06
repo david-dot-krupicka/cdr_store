@@ -8,6 +8,7 @@ has columns => (is => 'ro', isa => 'Str', lazy => 1, builder => '_build_columns'
 has db => (is => 'ro', isa => 'Mojo::mysql::Database', required => 1);
 has select_clause => (is => 'ro', isa => 'Str', lazy => 1, builder => '_build_select_clause');
 
+
 method _build_columns () {
 	return join(',',
 		"c.msisdn AS caller_id",

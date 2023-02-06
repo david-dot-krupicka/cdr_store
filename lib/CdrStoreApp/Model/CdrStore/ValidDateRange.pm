@@ -10,6 +10,7 @@ has maybe_end_date => (is => 'ro', isa => 'Str', required => 1);
 has start_date => (is => 'ro', isa => 'Time::Piece', lazy => 1, builder => '_build_start_date');
 has end_date => (is => 'ro', isa => 'Time::Piece', lazy => 1, builder => '_build_end_date');
 
+
 method BUILD ($args) {
 	# Missing date will be catched by OpenAPI spec
 	eval {

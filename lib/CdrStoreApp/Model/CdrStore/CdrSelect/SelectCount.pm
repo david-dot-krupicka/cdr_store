@@ -1,12 +1,11 @@
 package CdrStoreApp::Model::CdrStore::CdrSelect::SelectCount;
 use Moose;
-use CdrStoreApp::Model::CdrStore::ValidDateRange;
-use Function::Parameters;
-
-use feature 'say';
 
 with 'CdrStoreApp::Model::CdrStore::Role::SelectCountRole',
-     'CdrStoreApp::Model::CdrStore::Role::DateRole';
+	 'CdrStoreApp::Model::CdrStore::Role::DateRole';
+
+use CdrStoreApp::Model::CdrStore::ValidDateRange;
+use Function::Parameters;
 
 has binds => (is => 'ro', isa => 'ArrayRef', lazy => 1, builder => '_build_binds');
 has call_type => (is => 'ro', isa => 'Maybe[Int]', default => undef);

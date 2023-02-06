@@ -3,8 +3,6 @@ use Moose::Role;
 use Function::Parameters;
 use Mojo::Exception qw(check);
 
-use feature 'say';
-
 has date_range => (
 	is      => 'ro',
 	isa     => 'CdrStoreApp::Model::CdrStore::ValidDateRange',
@@ -13,6 +11,7 @@ has date_range => (
 );
 has end_date => (is => 'ro', isa => 'Str', required => 1);
 has start_date => (is => 'ro', isa => 'Str', required => 1);
+
 
 method _build_date_range () {
 	my $range;

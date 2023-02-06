@@ -12,8 +12,6 @@ use CdrStoreApp::Model::CdrStore::CdrSelect::SelectCdr;
 use CdrStoreApp::Model::CdrStore::CdrSelect::SelectCount;
 use CdrStoreApp::Model::CdrStore::CdrSelect::SelectList;
 
-use feature 'say';
-
 has mariadb => (is => 'ro', isa => 'Mojo::mysql', required => 1);
 
 

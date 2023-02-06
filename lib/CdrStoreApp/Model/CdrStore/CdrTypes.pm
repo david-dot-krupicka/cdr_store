@@ -1,6 +1,8 @@
 package CdrStoreApp::Model::CdrStore::CdrTypes;
 use Moose;
 use Moose::Util::TypeConstraints;
+
+
 subtype 'Cdr::Type::RecordType'
 	=> as 'Int'
 	=> where { $_ =~ /^[1|2]$/ }

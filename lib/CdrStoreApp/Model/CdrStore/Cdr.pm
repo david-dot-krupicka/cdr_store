@@ -6,9 +6,6 @@ use MooseX::NonMoose;
 use Function::Parameters;
 use Time::Piece;
 
-use feature 'say';
-
-# Implements only very basic type checking
 has call_date => (is => 'ro', isa => 'Str', required => 1);
 has call_datetime => (
 	is => 'ro', isa => 'Time::Piece',
@@ -76,7 +73,7 @@ method insert_record () {
 			}
 		);
 	};
-	say $@ if $@;
+	die $@ if $@;
 }
 
 method _insert_msisdn_into_table ($table, $msisdn) {
@@ -88,7 +85,7 @@ method _insert_msisdn_into_table ($table, $msisdn) {
 		$id = $self->db->select(
 			$table, undef, { MSISDN => $msisdn })->hash->{id} if $id == 0;
 	};
-	say $@ if $@;
+	die $@ if $@;
 	return $id;
 }
 

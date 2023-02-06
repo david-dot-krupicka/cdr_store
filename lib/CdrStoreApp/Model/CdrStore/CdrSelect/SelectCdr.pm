@@ -1,11 +1,10 @@
 package CdrStoreApp::Model::CdrStore::CdrSelect::SelectCdr;
 use Moose;
-use CdrStoreApp::Model::CdrStore::ValidDateRange;
-use Function::Parameters;
 
 with 'CdrStoreApp::Model::CdrStore::Role::SelectAllRole';
 
-use feature 'say';
+use CdrStoreApp::Model::CdrStore::ValidDateRange;
+use Function::Parameters;
 
 has reference => (is => 'ro', isa => 'Str', required => 1);
 has columns => (is => 'ro', isa => 'Str', lazy => 1, builder => '_build_columns');

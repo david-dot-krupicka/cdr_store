@@ -2,6 +2,7 @@ package CdrStoreApp::Controller::UploadFile;
 use Mojo::Base 'Mojolicious::Controller';
 use Exception::Class::Try::Catch;
 
+
 sub upload_form {
 	my ($c) = @_;
 	$c->openapi->valid_input or return;
