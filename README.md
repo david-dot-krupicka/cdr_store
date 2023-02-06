@@ -47,5 +47,42 @@ For the sake of the example, let's create simple tables which will just
 demonstrate a possible DB model, following a simple rule - if there are
 repeated records, store them in related table.
 
+## Run
+In application HOME:
+1. Deploy the empty database (with MariaDB running in the container)
+
+    `bin/cdr_store.pl deploy`
+
+   (see `bin/cdr_store.pl deploy --help`)
+2. Upload the data either with
+
+   `bin/cdr_store.pl upload example_cdr.csv`
+
+    Or via web form in http://127.0.0.1:3000/api/upload
+
+3. Play with API, see the ReDoc documentation.
+
+    The endpoins are:
+    * api/get_cdr
+    * api/count_cdr
+    * api/cdr_by_caller
+
 ## Testing
 `prove -I./lib -v` in applications home.
+
+<i>Note: Tests depend on running 02_commands.t first, this test loads the data</i>
+    
+## What could be done better
+1. Use OpenAPI v3 specification (oneOf/allOf would be handy)
+2. Do not abuse upload command to load the data (I was glad I managed to have it working)
+   
+    There is also no progress bar or at least spinning wheel in the web form
+3. Probably the error handling - at first I tried with Exception::Class::Try::Catch,
+   not knowing how Mojo handles the exceptions internally
+4. Maybe do not use Moose at all
+5. Tests should be independent, not relying on each other
+6. Add POD
+
+## The biggest gotchas
+1. Error handling surprise!
+2. The upload
