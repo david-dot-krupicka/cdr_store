@@ -1,13 +1,13 @@
 package CdrStoreApp::Command::upload;
+
 use Moose;
 use MooseX::NonMoose;
+use Function::Parameters;
+use Text::CSV_XS;
+
 use feature 'say';
 
 extends 'Mojolicious::Command';
-
-use Carp qw(croak);
-use Function::Parameters;
-use Text::CSV_XS;
 
 has description => (is => 'ro', isa => 'Str', default => 'Upload CDR records file');
 has usage => (is => 'rw', isa => 'Str', lazy => 1, builder => '_build_usage');
@@ -28,7 +28,7 @@ method _build_batch_size () {
 method run ($filename) {
 	my $csv = Text::CSV_XS->new({ binary => 1, auto_diag => 1 });
 
-	open my $fh, '<', $filename or croak "Cannot open file '$filename': $!";
+	open my $fh, '<', $filename or die "Cannot open file '$filename': $!";
 
 	my @columns = $csv->column_names( $csv->getline($fh) );
 
@@ -40,7 +40,10 @@ method run ($filename) {
 
 		if (scalar @records % $self->batch_size == 0) {
 			say sprintf($user_message_template, scalar @records);
-			$self->app->cdrstore->insert_cdr_records(\@columns, \@records);
+			eval {
+				$self->app->cdrstore->insert_cdr_records(\@columns, \@records);
+			};
+			die "ERROR: ", $@ if $@;
 			@records = ();
 		}
 	}
@@ -48,10 +51,13 @@ method run ($filename) {
 	# Insert the rest
 	if (scalar @records) {
 		say sprintf($user_message_template, scalar @records);
-		$self->app->cdrstore->insert_cdr_records(\@columns, \@records);
+		eval {
+			$self->app->cdrstore->insert_cdr_records(\@columns, \@records);
+		};
 	}
 
-	return 1;
+	die "ERROR: ", $@ if $@;
+	return 0
 }
 
 __PACKAGE__->meta()->make_immutable();

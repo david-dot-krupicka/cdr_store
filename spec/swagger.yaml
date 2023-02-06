@@ -1,26 +1,65 @@
----
-
 swagger: "2.0"
 info:
-    version: 1.0
+    version: "1.0"
     title: CDR Store API
-basePath: "/api"
+basePath: /api
 tags:
   - name: CDR
     description: CDR Store to upload and analyze call data
 schemes:
-  - "http"
+  - http
 consumes:
-  - "application/json"
+  - application/json
+  - multipart/form-data
 produces:
-  - "application/json"
+  - application/json
 paths:
+  /upload:
+    get:
+      operationId: uploadForm
+      x-mojo-name: upload_form
+      x-mojo-to: UploadFile#upload_form
+      summary: Basic form to upload a file.
+      produces:
+        - text/html
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+    post:
+      operationId: upload
+      x-mojo-name: upload
+      x-mojo-to: UploadFile#upload
+      summary: Uploads Uploads a file.
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: upfile
+          in: formData
+          type: file
+          description: The file to upload.
+      responses:
+        200:
+          description: Returns if upload was successful.
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        400:
+          description: Returns error message
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
   /get_cdr:
     get:
       operationId: getCdr
       x-mojo-name: get_cdr
-      x-mojo-to: CdrStore#get_cdr
-      summary: Returns one CDR record by reference
+      x-mojo-to: CdrStore#get_one_cdr
+      summary: Returns one CDR record by reference.
       parameters:
         - name: reference
           in: query
@@ -28,24 +67,23 @@ paths:
           type: string
       responses:
         200:
-          description: Returns CDR object
+          description: Returns CDR object.
           schema:
             $ref: "#/definitions/SuccessCdrResponse"
         404:
-          description: CDR not found
+          description: Returns CDR not found error.
           schema:
             $ref: "#/definitions/ErrorModel"
         422:
-          description: Invalid CDR record
+          description: Returns Invalid CDR record error.
           schema:
             $ref: "#/definitions/ErrorModelInvalidRecord"
-
   /count_cdr:
     get:
       operationId: countCdr
       x-mojo-name: count_cdr
-      x-mojo-to: CdrStore#count_cdr
-      summary: Count all CDRs in given time range, up to 1 month
+      x-mojo-to: CdrStore#get_cdr_count
+      summary: Counts all CDRs in given time range, up to 1 month.
       parameters:
         - name: start_date
           description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
@@ -64,24 +102,23 @@ paths:
           maximum: 2
       responses:
         200:
-          description: Returns count of CDR records and total call duration
+          description: Returns count of CDR records and total call duration.
           schema:
             $ref: "#/definitions/SuccessCdrCount"
         400:
           description: custom error response
           schema:
             $ref: "#/definitions/ErrorModel"
-        default:
-          description: error response
+        404:
+          description: custom error response
           schema:
             $ref: "#/definitions/ErrorModel"
-
   /cdr_by_caller:
     get:
       operationId: cdrByCaller
       x-mojo-name: cdr_by_caller
-      x-mojo-to: CdrStore#cdr_by_caller
-      summary: Get all CDR's in given time range, for given caller, up to 1 month
+      x-mojo-to: CdrStore#get_cdr_list
+      summary: Get all CDR's in given time range, for given caller, up to 1 month.
       parameters:
         - name: start_date
           description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
@@ -102,62 +139,26 @@ paths:
           type: integer
           minimum: 1
           maximum: 2
+        - name: top_x_calls
+          in: query
+          type: integer
       responses:
         200:
-          description: Returns list of CDR objects matching criteria
+          description: Returns list of CDR objects matching criteria.
           schema:
             $ref: "#/definitions/SuccessCdrList"
-        #default:
-        #  description: error response
-        #  schema:
-        #    $ref: "#/definitions/ErrorModel"
-
-  /cdr_by_caller/top:
-    get:
-      operationId: cdrByCallerTop
-      x-mojo-name: cdr_by_caller_top
-      x-mojo-to: CdrStore#cdr_by_caller_top
-      summary: Top X most expensive calls in given time range, for given caller, up to 1 month
-      parameters:
-        - name: start_date
-          description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
-          in: query
-          required: true
-          type: string
-        - name: end_date
-          description: Supported format %d/%m/%Y or %d/%m/%YT%H:%M:%S
-          in: query
-          required: true
-          type: string
-        - name: caller_id
-          in: query
-          required: true
-          type: integer
-        - name: top_x_queries
-          in: query
-          required: true
-          type: integer
-        - name: call_type
-          in: query
-          type: integer
-          minimum: 1
-          maximum: 2
-      responses:
-        200:
-          description: Returns list of CDR objects matching criteria
+        400:
+          description: custom error response
           schema:
-            $ref: "#/definitions/SuccessCdrList"
-        #default:
-        #  description: error response
-        #  schema:
-        #    $ref: "#/definitions/ErrorModel"
-
+            $ref: "#/definitions/ErrorModel"
+        404:
+          description: No records found
+          schema:
+            $ref: "#/definitions/ErrorModel"
 definitions:
   SuccessCdrResponse:
     type: object
     required:
-      - action
-      - status
       - cdr
     properties:
       action:
@@ -168,12 +169,9 @@ definitions:
         maximum: 299
       cdr:
         $ref: "#/definitions/CdrObject"
-
   SuccessCdrCount:
     type: object
     required:
-      - action
-      - status
       - cdr_count
       - total_call_duration
     properties:
@@ -188,12 +186,9 @@ definitions:
       total_call_duration:
         description: Total duration in hh:mm:ss format
         type: string
-
   SuccessCdrList:
     type: object
     required:
-      - action
-      - status
       - caller_id
       - records
     properties:
@@ -209,7 +204,6 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/CdrObject"
-
   CdrObject:
     type: object
     required:
@@ -245,23 +239,19 @@ definitions:
         type: integer
         minimum: 1
         maximum: 2
-
   ErrorModel:
     type: object
     required:
-      - action
-      - status
-      - ierr
+      - error
     properties:
       action:
         type: string
-      ierr:
+      error:
         type: string
       status:
         type: integer
         minimum: 100
         maximum: 600
-
   ErrorModelInvalidRecord:
     allOf:
       - $ref: '#/definitions/ErrorModel'
