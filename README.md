@@ -82,6 +82,7 @@ In application HOME:
 4. Maybe do not use Moose at all
 5. Tests should be independent, not relying on each other
 6. Add POD
+7. Setup database with Dockerfile or docker-compose
 
 ## The biggest gotchas
 1. Error handling surprise!
