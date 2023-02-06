@@ -1,71 +1,55 @@
 package CdrStoreApp::Model::CdrStore::CdrSelect::SelectList;
 use Moose;
 
-extends 'CdrStoreApp::Model::CdrStore::CdrSelect::SelectCount';
+with 'CdrStoreApp::Model::CdrStore::Role::SelectAllRole',
+	 'CdrStoreApp::Model::CdrStore::Role::DateRole';
 
 use CdrStoreApp::Model::CdrStore::ValidDateRange;
-use Exception::Class::Try::Catch;
 use Function::Parameters;
 
-has caller_id => (is => 'ro', isa => 'Int', required => 1);
+has binds => (is => 'ro', isa => 'ArrayRef', lazy => 1, builder => '_build_binds');
+has caller_id => (is => 'ro', isa => 'Int');
+has call_type => (is => 'ro', isa => 'Maybe[Int]', default => undef);
 has columns => (is => 'ro', isa => 'Str', lazy => 1, builder => '_build_columns');
 has select_clause => (is => 'ro', isa => 'Str', lazy => 1, builder => '_build_select_clause');
 has top_calls => (is => 'ro', isa => 'Maybe[Int]', default => undef);
+has where_clause => (is => 'ro', isa => 'Str', lazy => 1, builder => '_build_where_clause');
 
-method _build_columns () {
-	return join(',',
-		"c.msisdn AS caller_id",
-		"r.msisdn AS recipient",
-		"DATE_FORMAT(call_datetime, '%d/%m/%Y') AS call_date",
-		"DATE_FORMAT(call_datetime, '%H:%i:%S') AS end_time",
-		"duration",
-		"cost",
-		"reference",
-		"currency",
-		"type",
-	);
-}
-
-method _build_select_clause () {
-	my $sql = <<"	SQL";
-SELECT %s FROM call_records cdr
-	JOIN customers c on cdr.caller_id = c.id
-	JOIN recipients r on cdr.recipient = r.id
-	SQL
-	return sprintf($sql, $self->columns);
-}
-
-override '_build_where_clause' => sub {
-	my ($self) = @_;
-	return sprintf('%s %s %s',
-		super(),
+method _build_where_clause () {
+	return sprintf('%s %s %s %s',
+		'WHERE call_datetime BETWEEN ? AND ?',
+		$self->call_type ? 'AND type = ?' : '',
 		'AND c.msisdn = ?',
 		$self->top_calls ? 'ORDER BY cost DESC LIMIT ?' : ''
 	)
 };
 
-override '_build_binds' => sub {
-	my ($self) = @_;
-	my @binds = @{ super() };
+method _build_binds () {
+	my @binds;
+	eval {
+		@binds = (
+			$self->date_range->start_date->strftime('%Y-%m-%d %H:%M:%S'),
+			$self->date_range->end_date->strftime('%Y-%m-%d %H:%M:%S'),
+		);
+	};
+	die $@ if $@;
+
+	$self->call_type ? push @binds, $self->call_type : ();
 	push @binds, $self->caller_id;
 	push @binds, $self->top_calls ? $self->top_calls : ();
+
 	return \@binds
 };
 
-override 'select' => sub {
-	my ($self) = @_;
+method select () {
 	my $stmt = sprintf('%s %s', $self->select_clause, $self->where_clause);
-	my ($result, $err);
-	try {
-		$result = $self->db->query( $stmt, @{$self->binds} )->hashes;
-	} catch {
-		$err = $_->message;
-		if (defined $err->{ierr}) {
-			die $err;
-		} else {
-			die { ierr => 'query_failed', message => $err->message };
-		};
+	my $result;
+
+	eval {
+		$result = $self->db->query($stmt, @{$self->binds})->hashes;
 	};
+	die $@ if $@;
+
 	return $result;
 };
 

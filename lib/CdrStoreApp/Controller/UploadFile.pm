@@ -25,16 +25,17 @@ sub browser_redirect {
 sub upload {
 	my ($c) = @_;
 	$c->openapi->valid_input or return;
+	my %msg;
 
 	if ( ! $c->param('upload_file') ) {
-		my %msg = ( error => 'File is required.' );
+		%msg = ( error => 'File is required.' );
 		$c->browser_redirect(\%msg) ||
 			return $c->render(openapi => { %msg });
 	}
 
 	my $current_size_limit = $c->app->max_request_size;
 	if ($c->req->is_limit_exceeded) {
-		my %msg = ( error => "File size exceeded the limit ($current_size_limit bytes)." );
+		%msg = ( error => "File size exceeded the limit ($current_size_limit bytes)." );
 		$c->browser_redirect(\%msg) ||
 			return $c->render(openapi => { %msg });
 	}
@@ -52,11 +53,18 @@ sub upload {
 
 	# better naming, it actually performs inserts to the db...
 	#
-	$c->app->commands->run('upload', $file->filename); # in case of error it dies :-/
+	eval {
+		$c->app->commands->run('upload', $file->filename); # in case of error it dies :-/
+	};
+	if ($@) {
+		%msg = ( error => $@ );
+		$c->browser_redirect(\%msg) ||
+			return $c->render(openapi => { %msg });
+	}
 
 	$file->move_to(sprintf('%s/uploads/%s', $c->app->home, $file->filename));
 
-	my %msg = ( message => "File upload successful.");
+	%msg = ( message => "File upload successful.");
 	$c->browser_redirect(\%msg) ||
 		$c->render(openapi => { %msg });
 }
